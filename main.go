@@ -40,14 +40,28 @@ func searchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 	w.Write(js)
 }
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "<h1>%s</h1>", "Hello Noah!")
+}
+
+//Helper function to clear a map if searched for less than 2 times
+func trimMap(m *map[string]int) {
+	for k, v := range *m {
+		if v < 2 {
+			delete(*m, k)
+		}
+	}
+}
+
 func main() {
-	//Init the searchhistory map
+	//Init the searchhistory
 	searchHistory = make(map[string]int)
 	//Timer to keep search history and stuff
 	go func() {
 		c := time.Tick(30 * time.Second)
 		for now := range c {
 			fmt.Printf("%v, %v\n", now, searchHistory)
+			trimMap(&searchHistory)
 		}
 	}()
 	file, err := os.Open("words.txt")
@@ -61,6 +75,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	trieTree.BuildTrie(scanner)
 
+	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
 		searchHandler(w, r, trieTree)
 	})
