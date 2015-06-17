@@ -64,7 +64,7 @@ func main() {
 			trimMap(&searchHistory)
 		}
 	}()
-	file, err := os.Open("words.txt")
+	file, err := os.Open("titles.txt")
 	if err != nil {
 		log.Fatal(err)
 	}

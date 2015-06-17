@@ -2,6 +2,7 @@ package trie
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -14,12 +15,14 @@ type Trie struct {
 }
 
 type trieNode struct {
-	value   string
-	letters [27]*trieNode
+	value     string
+	container *[]string
+	letters   *[27]*trieNode
 }
 
 func (t *Trie) Initialize() {
-	t.root = &trieNode{value: "", letters: [27]*trieNode{}}
+	temp := [27]*trieNode{}
+	t.root = &trieNode{value: "", letters: &temp}
 }
 
 func (t *Trie) BuildTrie(scanner *bufio.Scanner) {
@@ -36,6 +39,7 @@ func (t *Trie) BuildTrie(scanner *bufio.Scanner) {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Done")
 }
 
 func (t *Trie) Add(s string) {
@@ -43,25 +47,64 @@ func (t *Trie) Add(s string) {
 	idx := 0
 	for idx < len(s) {
 		pos := s[idx] - 97
-		if current.letters[pos] == nil {
-			current.letters[pos] = &trieNode{value: "", letters: [27]*trieNode{}}
-		}
-		current = current.letters[pos]
 		idx++
-		if idx == len(s) {
-			current.value = s
+		if current.container != nil {
+			tempContainer := *current.container
+			tempContainer = append(tempContainer, s)
+			current.container = &tempContainer
+			if len(*current.container) >= 20 {
+				current.letters = &[27]*trieNode{}
+				for _, str := range *current.container {
+					// fmt.Printf("%v, %#v\n", idx, str)
+					insertPos := str[idx-1] - 97
+					if current.letters[insertPos] == nil {
+						temp := make([]string, 0)
+						current.letters[insertPos] = &trieNode{value: "", container: &temp}
+					}
+					if idx == len(str) {
+						current.letters[insertPos].value = str
+						continue
+					}
+					tCurrent := current.letters[insertPos]
+					tempContainer := *tCurrent.container
+					tempContainer = append(tempContainer, str)
+					tCurrent.container = &tempContainer
+				}
+				current.container = nil
+			}
+			return
+		}
+		if current.letters[pos] == nil {
+			temp := make([]string, 0)
+			current.letters[pos] = &trieNode{value: "", container: &temp}
+			current = current.letters[pos]
+			if idx == len(s) {
+				current.value = s
+			} else {
+				tempContainer := *current.container
+				tempContainer = append(tempContainer, s)
+				current.container = &tempContainer
+			}
+		} else {
+			current = current.letters[pos]
 		}
 	}
 }
 
-func (t *Trie) Find(sub string) []string {
-	if !plainWord.MatchString(sub) {
+func (t *Trie) Find(searchString string) []string {
+	if !plainWord.MatchString(searchString) {
+		fmt.Println("Not valid")
 		return make([]string, 0)
 	}
 	current := t.root
-	for idx := 0; idx < len(sub); idx++ {
-		pos := sub[idx] - 97
+	for idx := 0; idx < len(searchString); idx++ {
+		pos := searchString[idx] - 97
+		if current.container != nil {
+			fmt.Println("Returning container...")
+			return *current.container
+		}
 		if current.letters[pos] == nil {
+			fmt.Println("Returning this weird...")
 			return make([]string, 0)
 		}
 		current = current.letters[pos]
@@ -74,7 +117,14 @@ func (t *Trie) Find(sub string) []string {
 }
 
 func findHelper(start *trieNode, toReturn *[]string) []string {
-	for _, pStart := range start.letters {
+	if start.container != nil {
+		for _, val := range *start.container {
+			*toReturn = append(*toReturn, val)
+		}
+		//If letters < 9 -- Add later
+		return *toReturn
+	}
+	for _, pStart := range *start.letters {
 		if len(*toReturn) > 9 {
 			return *toReturn
 		}
