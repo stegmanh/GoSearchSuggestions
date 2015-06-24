@@ -17,7 +17,7 @@ type Suggestions struct {
 	Results []string
 }
 
-var plainWord = regexp.MustCompile(`(^[a-zA-Z]*$)`)
+var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
 var trieTree *trie.Trie = nil
 var searchHistory map[string]int
 

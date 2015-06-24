@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var plainWord = regexp.MustCompile(`(^[a-zA-Z]*$)`)
+var plainWord = regexp.MustCompile(`(^[a-zA-Z_ ]*$)`)
 
 type Trie struct {
 	root *trieNode
@@ -33,6 +33,7 @@ func (t *Trie) BuildTrie(scanner *bufio.Scanner) {
 		if !matched {
 			continue
 		}
+		s = strings.Replace(s, "_", " ", -1)
 		t.Add(s)
 		count++
 	}
@@ -47,6 +48,10 @@ func (t *Trie) Add(s string) {
 	idx := 0
 	for idx < len(s) {
 		pos := s[idx] - 97
+		//Catch the space's
+		if pos < 0 || pos > 25 {
+			pos = 26
+		}
 		idx++
 		if current.container != nil {
 			tempContainer := *current.container
@@ -55,8 +60,11 @@ func (t *Trie) Add(s string) {
 			if len(*current.container) >= 20 {
 				current.letters = &[27]*trieNode{}
 				for _, str := range *current.container {
-					// fmt.Printf("%v, %#v\n", idx, str)
+					// Check for space or whatever char code 191 + 97 is
 					insertPos := str[idx-1] - 97
+					if insertPos < 0 || insertPos > 25 {
+						insertPos = 26
+					}
 					if current.letters[insertPos] == nil {
 						temp := make([]string, 0)
 						current.letters[insertPos] = &trieNode{value: "", container: &temp}
@@ -99,15 +107,21 @@ func (t *Trie) Find(searchString string) []string {
 	current := t.root
 	for idx := 0; idx < len(searchString); idx++ {
 		pos := searchString[idx] - 97
-		if current.container != nil {
-			fmt.Println("Returning container...")
-			return *current.container
+		if pos < 0 || pos > 26 {
+			pos = 26
 		}
-		if current.letters[pos] == nil {
-			fmt.Println("Returning this weird...")
-			return make([]string, 0)
+		if current.letters != nil {
+			if current.letters[pos] == nil {
+				return make([]string, 0)
+			}
+			current = current.letters[pos]
+		} else {
+			//Meh this should change, doesnt look good
+			break
 		}
-		current = current.letters[pos]
+	}
+	if current.container != nil {
+		return filter(*current.container, searchString)
 	}
 	toReturn := make([]string, 0)
 	if current.value != "" {
@@ -136,4 +150,13 @@ func findHelper(start *trieNode, toReturn *[]string) []string {
 		}
 	}
 	return *toReturn
+}
+
+func filter(s []string, start string) (toReturn []string) {
+	for _, word := range s {
+		if strings.HasPrefix(word, start) {
+			toReturn = append(toReturn, word)
+		}
+	}
+	return
 }
