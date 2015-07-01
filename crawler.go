@@ -4,25 +4,32 @@ import (
 	"bufio"
 	"encoding/xml"
 	"fmt"
+	"github.com/garyburd/redigo/redis"
 	"io/ioutil"
 	"net/http"
 	"path"
+	"queue"
 	"strings"
 	"sync"
 	"time"
 )
 
+var pool = redis.Pool
+
 var robots = make(map[string]bool)
-var alreadyCrawled = make(map[string]bool)
 var mutex = &sync.Mutex{}
-var urls = make(chan string, 100000)
 
 func main() {
 	wg := new(sync.WaitGroup)
 	loadRobots("http://cnn.com")
-	for i := 0; i < 3; i++ {
+
+	//Initilize redis information
+	pool = CreatePool()
+
+	//Number of goroutines to create to process urls
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		go worker(wg)
+		worker(wg)
 	}
 	wg.Wait()
 }
@@ -48,7 +55,7 @@ func loadRobots(root string) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		fmt.Println("We got as err ", err)
+		panic(err)
 	}
 }
 
@@ -57,7 +64,10 @@ func worker(wg *sync.WaitGroup) {
 	for {
 		select {
 		case url := <-urls:
-			go handleUrl(url)
+			//Consider running in goroutine sometime
+			handleUrl(url)
+			//Sleep to slow things down...
+			time.Sleep(time.Millisecond * 50)
 		default:
 			fmt.Println("Sleeping..")
 			time.Sleep(3 * time.Second)
@@ -65,6 +75,7 @@ func worker(wg *sync.WaitGroup) {
 	}
 }
 
+//XML structures
 type SiteMapIndex struct {
 	SiteMaps []SiteMap `xml:",any"`
 }
@@ -94,14 +105,16 @@ func handleUrl(url string) {
 		fmt.Println(err)
 	}
 	for _, smo := range sm.SiteMaps {
-		mutex.Lock()
-		_, exists := alreadyCrawled[smo.Location]
+		exists, err := HashExists(&pool, "urlexists", smo.Location)
+		if err {
+			fmt.Println(err)
+			continue
+		}
 		if !exists {
 			alreadyCrawled[smo.Location] = true
-			urls <- smo.Location
+			QueuePush(&pool, "messagequeue", value)
 		} else {
 			fmt.Println("Already crawled: ", smo.Location+", ", len(alreadyCrawled))
 		}
-		mutex.Unlock()
 	}
 }
