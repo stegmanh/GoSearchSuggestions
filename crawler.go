@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./htmlcrawler"
 	"./redisqueue"
 	"bufio"
 	"encoding/xml"
@@ -58,7 +59,7 @@ func loadRobots(root string) {
 		if len(information) == 2 {
 			switch information[0] {
 			case "Sitemap":
-				exists, err := queue.HashAdd(pool, "urlexists", strings.TrimSpace(information[1]), "true")
+				exists, err := queue.HashAdd(&pool, "urlexists", strings.TrimSpace(information[1]), "true")
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -66,7 +67,7 @@ func loadRobots(root string) {
 					fmt.Println("Robots were already added to ")
 					continue
 				}
-				queue.QueuePush(pool, "messagequeue", strings.TrimSpace(information[1]))
+				queue.QueuePush(&pool, "messagequeue", strings.TrimSpace(information[1]))
 			case "Disallow":
 				disallowedUrl := root + strings.TrimSpace(information[1])
 				robots[disallowedUrl] = true
@@ -81,9 +82,9 @@ func loadRobots(root string) {
 func worker(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		url, err := queue.QueuePop(pool, "messagequeue")
+		url, err := queue.QueuePop(&pool, "messagequeue")
 		if err != nil || len(url) == 0 {
-			fmt.Println(url, err)
+			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
 			time.Sleep(3 * time.Second)
 		} else {
@@ -107,6 +108,14 @@ type SiteMap struct {
 
 func handleUrl(url string) {
 	//Temp to handle extensions
+	//TODO Handle the HTML files
+	if path.Ext(url) == ".html" {
+		_, err := htmlcrawler.CrawlHTML(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
 	if path.Ext(url) != ".xml" {
 		return
 	}
@@ -125,14 +134,14 @@ func handleUrl(url string) {
 		fmt.Println(err)
 	}
 	for _, smo := range sm.SiteMaps {
-		exists, err := queue.HashExists(pool, "urlexists", smo.Location)
+		exists, err := queue.HashAdd(&pool, "urlexists", smo.Location, "true")
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		if !exists {
-			queue.HashAdd(pool, "urlexists", smo.Location, "true")
-			queue.QueuePush(pool, "messagequeue", smo.Location)
+		// If it was new...
+		if exists == 1 {
+			queue.QueuePush(&pool, "messagequeue", smo.Location)
 		} else {
 			fmt.Println("Already crawled: ", smo.Location)
 		}
