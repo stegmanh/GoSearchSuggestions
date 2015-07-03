@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"golang.org/x/net/html"
 	"net/http"
+	"strings"
 )
 
 type PageInformation struct {
 	Title, Date string
+	Body        []byte
 	Urls        []string
 }
 
@@ -23,6 +25,19 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 		for _, attr := range n.Attr {
 			if attr.Key == "href" {
 				pi.Urls = append(pi.Urls, attr.Val)
+			}
+		}
+	}
+
+	if len(pi.Body) == 0 && n.Type == html.ElementNode && n.Data == "section" {
+		for _, attr := range n.Attr {
+			if attr.Key == "class" {
+				classNames := strings.Split(attr.Val, " ")
+				for _, class := range classNames {
+					if class == "zn-body-text" {
+						getText(n, pi)
+					}
+				}
 			}
 		}
 	}
@@ -48,7 +63,7 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 //Takes a URL in string format and starts the recursive calls to TraverseNode that populate page information
 func CrawlHTML(url string) (PageInformation, error) {
 	resp, err := http.Get(url)
-	pi := &PageInformation{Title: "", Date: "", Urls: make([]string, 0)}
+	pi := &PageInformation{Title: "", Date: "", Body: make([]byte, 0), Urls: make([]string, 0)}
 	if err != nil {
 		return *pi, err
 	}
@@ -59,4 +74,16 @@ func CrawlHTML(url string) (PageInformation, error) {
 	}
 	TraverseNode(doc, pi)
 	return *pi, nil
+}
+
+//Consider changing this to grab images as well
+func getText(n *html.Node, pi *PageInformation) {
+	// I hate that this statememt exists
+	if n.Type == html.TextNode && n.Parent.Data != "" && (n.Parent.Data == "p" || n.Parent.Data == "cite" || n.Parent.Data == "h3" || n.Parent.Data == "h4") {
+		formattedBody := fmt.Sprintf("<%v>%v</%v>", n.Parent.Data, n.Data, n.Parent.Data)
+		pi.Body = append(pi.Body, formattedBody...)
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		getText(c, pi)
+	}
 }
