@@ -4,9 +4,11 @@ import (
 	"./htmlcrawler"
 	"./redisqueue"
 	"bufio"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -16,12 +18,19 @@ import (
 )
 
 var pool redis.Pool
+var db *sql.DB
 
 var robots = make(map[string]bool)
 var mutex = &sync.Mutex{}
 
 func main() {
 	wg := new(sync.WaitGroup)
+	var err error
+	//Init the database
+	db, err = sql.Open("postgres", "user=postgres password=qwert12345 dbname=postgres sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
 	//Initilize redis information
 	pool = redis.Pool{
 		MaxIdle:   50,
@@ -110,10 +119,7 @@ func handleUrl(url string) {
 	//Temp to handle extensions
 	//TODO Handle the HTML files
 	if path.Ext(url) == ".html" {
-		_, err := htmlcrawler.CrawlHTML(url)
-		if err != nil {
-			fmt.Println(err)
-		}
+		handleHTML(url)
 		return
 	}
 	if path.Ext(url) != ".xml" {
@@ -142,8 +148,27 @@ func handleUrl(url string) {
 		// If it was new...
 		if exists == 1 {
 			queue.QueuePush(&pool, "messagequeue", smo.Location)
-		} else {
-			fmt.Println("Already crawled: ", smo.Location)
 		}
+	}
+}
+
+func handleHTML(url string) {
+	pi, err := htmlcrawler.CrawlHTML(url)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, url := range pi.Urls {
+		exists, err := queue.HashAdd(&pool, "urlexists", url, "true")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		if exists == 1 {
+			queue.QueuePush(&pool, "messagequeue", url)
+		}
+	}
+	err = pi.StorePage(db)
+	if err != nil {
+		fmt.Println(err)
 	}
 }

@@ -1,16 +1,25 @@
 package htmlcrawler
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"golang.org/x/net/html"
 	"net/http"
 	"strings"
 )
 
 type PageInformation struct {
-	Title, Date string
-	Body        []byte
-	Urls        []string
+	Title, Date, Source string
+	Body                []byte
+	Urls                []string
+}
+
+func (pi *PageInformation) StorePage(db *sql.DB) error {
+	//Changed to query row because query would give error with mismatched "multiple-value db.Query() in single-value context"
+	rows, err := db.Query("INSERT INTO articles (title, created_at, source, body) VALUES ($1, $2, $3, $4) RETURNING title", pi.Title, pi.Date, pi.Source, string(pi.Body))
+	rows.Close()
+	return err
 }
 
 //Helper function to traverse a HTML node and update the page information
@@ -63,7 +72,7 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 //Takes a URL in string format and starts the recursive calls to TraverseNode that populate page information
 func CrawlHTML(url string) (PageInformation, error) {
 	resp, err := http.Get(url)
-	pi := &PageInformation{Title: "", Date: "", Body: make([]byte, 0), Urls: make([]string, 0)}
+	pi := &PageInformation{Title: "", Date: "", Source: url, Body: make([]byte, 0), Urls: make([]string, 0)}
 	if err != nil {
 		return *pi, err
 	}
