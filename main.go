@@ -3,13 +3,14 @@ package main
 import (
 	"./trie"
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 )
 
 type Suggestions struct {
@@ -27,7 +28,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 		fmt.Fprintf(w, "%#v", "Please send search results")
 		return
 	}
-	searchHistory[searchTerm]++
 	searchResults := t.Find(searchTerm)
 	responseJSON := Suggestions{Term: searchTerm, Results: searchResults}
 	js, err := json.Marshal(responseJSON)
@@ -44,27 +44,39 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>%s</h1>", "Hello Noah!")
 }
 
-//Helper function to clear a map if searched for less than 2 times
-func trimMap(m *map[string]int) {
-	for k, v := range *m {
-		if v < 2 {
-			delete(*m, k)
+func dbSearchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	articleTitle := r.FormValue("title")
+	if len(articleTitle) == 0 {
+		fmt.Fprintf(w, "%v", "Please input an article title")
+		return
+	}
+	rows, err := db.Query("SELECT * FROM articles WHERE title = $1", articleTitle)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var title, createdAt, source, body string
+		err = rows.Scan(&title, &createdAt, &source, &body)
+		if err != nil {
+			fmt.Println("Got an error here..")
+			continue
 		}
+		fmt.Fprintf(w, "%v, %v, %v, %v", title, createdAt, source, body)
+		break
 	}
 }
 
 func main() {
-	//Init the searchhistory
-	searchHistory = make(map[string]int)
-	//Timer to keep search history and stuff
-	go func() {
-		c := time.Tick(30 * time.Second)
-		for now := range c {
-			fmt.Printf("%v, %v\n", now, searchHistory)
-			trimMap(&searchHistory)
-		}
-	}()
-	file, err := os.Open("titles.txt")
+	//Init DB, panic if fails
+	db, err := sql.Open("postgres", "user=postgres password=qwert12345 dbname=postgres sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	//Read words.txt
+	file, err := os.Open("words.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,6 +90,9 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
 		searchHandler(w, r, trieTree)
+	})
+	http.HandleFunc("/dbsearch", func(w http.ResponseWriter, r *http.Request) {
+		dbSearchHandler(w, r, db)
 	})
 	http.ListenAndServe(":8080", nil)
 }
