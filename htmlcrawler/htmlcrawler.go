@@ -18,7 +18,9 @@ type PageInformation struct {
 func (pi *PageInformation) StorePage(db *sql.DB) error {
 	//Changed to query row because query would give error with mismatched "multiple-value db.Query() in single-value context"
 	rows, err := db.Query("INSERT INTO articles (title, created_at, source, body) VALUES ($1, $2, $3, $4) RETURNING title", pi.Title, pi.Date, pi.Source, string(pi.Body))
-	rows.Close()
+	if rows != nil {
+		rows.Close()
+	}
 	return err
 }
 

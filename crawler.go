@@ -23,6 +23,8 @@ var db *sql.DB
 var robots = make(map[string]bool)
 var mutex = &sync.Mutex{}
 
+var now = time.Now()
+
 func main() {
 	wg := new(sync.WaitGroup)
 	var err error
@@ -68,15 +70,10 @@ func loadRobots(root string) {
 		if len(information) == 2 {
 			switch information[0] {
 			case "Sitemap":
-				exists, err := queue.HashAdd(&pool, "urlexists", strings.TrimSpace(information[1]), "true")
+				_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", strings.TrimSpace(information[1]))
 				if err != nil {
 					fmt.Println(err)
 				}
-				if exists != 1 {
-					fmt.Println("Robots were already added to ")
-					continue
-				}
-				queue.QueuePush(&pool, "messagequeue", strings.TrimSpace(information[1]))
 			case "Disallow":
 				disallowedUrl := root + strings.TrimSpace(information[1])
 				robots[disallowedUrl] = true
@@ -140,14 +137,23 @@ func handleUrl(url string) {
 		fmt.Println(err)
 	}
 	for _, smo := range sm.SiteMaps {
-		exists, err := queue.HashAdd(&pool, "urlexists", smo.Location, "true")
+		//Check so we dont have super old site maps
+		if len(smo.Lastmod) != 0 {
+			//Simple layout will change
+			layout := "2006-01-02T15:04:05-05:00"
+			t, err := time.Parse(layout, smo.Lastmod)
+			if err != nil {
+				//Do something with error but we will just go on
+			} else {
+				if t.AddDate(0, 2, 0).Before(now) {
+					fmt.Println("Too old!  ", t)
+					continue
+				}
+			}
+		}
+		_, err = addUniqueToQueue(&pool, "urlexists", "messagequeue", smo.Location)
 		if err != nil {
 			fmt.Println(err)
-			continue
-		}
-		// If it was new...
-		if exists == 1 {
-			queue.QueuePush(&pool, "messagequeue", smo.Location)
 		}
 	}
 }
@@ -158,17 +164,27 @@ func handleHTML(url string) {
 		fmt.Println(err)
 	}
 	for _, url := range pi.Urls {
-		exists, err := queue.HashAdd(&pool, "urlexists", url, "true")
+		_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
 		if err != nil {
 			fmt.Println(err)
-			continue
-		}
-		if exists == 1 {
-			queue.QueuePush(&pool, "messagequeue", url)
 		}
 	}
 	err = pi.StorePage(db)
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+//Returns 1 if added to queue, 0 if not
+func addUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
+	exists, err := queue.HashAdd(pool, hashName, toAdd, "true")
+	if err != nil {
+		return 0, err
+	}
+	if exists == 1 {
+		queue.QueuePush(pool, queueName, toAdd)
+		return 1, nil
+	}
+	//Exists == 0 so the field already exists and we didnt add to the queue
+	return 0, nil
 }
