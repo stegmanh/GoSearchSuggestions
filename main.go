@@ -3,6 +3,7 @@ package main
 import (
 	"./trie"
 	"bufio"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -20,11 +21,14 @@ type Suggestions struct {
 }
 
 type Article struct {
-	Title, Date, Source, Body string
+	Title  string `json:"title"`
+	Date   string `json:"date"`
+	Source string `json:"source"`
+	Body   string `json:"body"`
 }
 
 type ArticleResponse struct {
-	Response []Article
+	Articles []Article `json:"data"`
 }
 
 var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
@@ -68,7 +72,7 @@ func dbSearchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 	defer rows.Close()
-	toReturn := ArticleResponse{Response: make([]Article, 0)}
+	toReturn := ArticleResponse{Articles: make([]Article, 0)}
 	for rows.Next() {
 		var title, createdAt, source, body string
 		err = rows.Scan(&title, &source, &body, &createdAt)
@@ -77,7 +81,7 @@ func dbSearchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			continue
 		}
 		articleAdd := Article{Title: title, Date: createdAt, Source: source, Body: body}
-		toReturn.Response = append(toReturn.Response, articleAdd)
+		toReturn.Articles = append(toReturn.Articles, articleAdd)
 	}
 	js, err := json.Marshal(toReturn)
 	if err != nil {
@@ -85,6 +89,10 @@ func dbSearchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		fmt.Println(err)
 		return
 	}
+	//Unencode.. This is disguesting but I can't find much else...
+	js = bytes.Replace(js, []byte("\\u003c"), []byte("<"), -1)
+	js = bytes.Replace(js, []byte("\\u003e"), []byte(">"), -1)
+	js = bytes.Replace(js, []byte("\\u0026"), []byte("&"), -1)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
