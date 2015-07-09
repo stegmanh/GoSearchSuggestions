@@ -2,3 +2,4 @@ titles.txt
 trieAddBackup.go
 snippets.go
 test*.go
+config.json

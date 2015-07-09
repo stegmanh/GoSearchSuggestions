@@ -5,6 +5,7 @@ import (
 	"./redisqueue"
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
@@ -25,11 +26,37 @@ var mutex = &sync.Mutex{}
 
 var now = time.Now()
 
+//Consider moving this + redis to its own repo -- This way we have consistent package accross all things
+type crawlerInformation struct {
+	Status      string            //Running, stopped, idle
+	Cpu         string            //Cpu usage -- Not doing yet
+	Ram         string            //Ram usage -- Not doing yet
+	UrlsCrawled int               //# Of total urls crawled
+	LastCrawled []string          //Last of some arbitrary number
+	QueueSize   int               //Size of the queue
+	IndexSize   int               //Size of DB
+	Errors      map[string]string //Map of all errors (Maybe we dont use)
+}
+
+type dbConfig struct {
+	User     string
+	Password string
+	Db_name  string
+	Ssl_mode string
+}
+
+type config struct {
+	Db dbConfig
+}
+
 func main() {
+	var c config
+	loadConfig("config.json", &c)
 	wg := new(sync.WaitGroup)
 	var err error
 	//Init the database
-	db, err = sql.Open("postgres", "user=postgres password=qwert12345 dbname=postgres sslmode=disable")
+	connString := fmt.Sprintf("user=%v password=%v dbname=%v sslmode=%v", c.Db.User, c.Db.Password, c.Db.Db_name, c.Db.Ssl_mode)
+	db, err = sql.Open("postgres", connString)
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +74,7 @@ func main() {
 		},
 	}
 
-	loadRobots("http://cnn.com")
+	//loadRobots("http://cnn.com")
 
 	//Number of goroutines to create to process urls
 	for i := 0; i < 10; i++ {
@@ -55,6 +82,15 @@ func main() {
 		worker(wg)
 	}
 	wg.Wait()
+}
+
+func loadConfig(path string, c *config) {
+	content, err := ioutil.ReadFile(path)
+	//Panic because reading config is going to be useful
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(content, c)
 }
 
 //TODO: Use path to join paths instead of concat
