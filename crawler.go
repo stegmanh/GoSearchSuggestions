@@ -28,15 +28,25 @@ var now = time.Now()
 
 //Consider moving this + redis to its own repo -- This way we have consistent package accross all things
 type crawlerInformation struct {
-	Status      string            //Running, stopped, idle
-	Cpu         string            //Cpu usage -- Not doing yet
-	Ram         string            //Ram usage -- Not doing yet
+	Status string //Running, stopped, idle
+	// Cpu         string            //Cpu usage -- Not doing yet
+	// Ram         string            //Ram usage -- Not doing yet
 	UrlsCrawled int               //# Of total urls crawled
 	LastCrawled []string          //Last of some arbitrary number
 	QueueSize   int               //Size of the queue
 	IndexSize   int               //Size of DB
 	Errors      map[string]string //Map of all errors (Maybe we dont use)
 }
+
+func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName, value string) err {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	_, err := queue.HashAdd(pool, hashName, "data", value)
+}
+
+var info crawlerInformation
 
 type dbConfig struct {
 	User     string
@@ -50,6 +60,10 @@ type config struct {
 }
 
 func main() {
+	//Load Crawler Information
+	info = &crawlerInformation{Status: "Running", UrlsCrawled: 0, LastCrawled: make([]string), QueueSize: 0, IndexSize: 0, Errors: make(map[string]string)}
+	info.storeSelf(pool, hashName, value)
+
 	var c config
 	loadConfig("config.json", &c)
 	wg := new(sync.WaitGroup)
