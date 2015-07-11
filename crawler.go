@@ -38,12 +38,13 @@ type crawlerInformation struct {
 	Errors      map[string]string //Map of all errors (Maybe we dont use)
 }
 
-func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName, value string) err {
+func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
-	_, err := queue.HashAdd(pool, hashName, "data", value)
+	_, err = redisqueue.HashAdd(pool, hashName, "data", string(data))
+	return err
 }
 
 var info crawlerInformation
@@ -61,8 +62,8 @@ type config struct {
 
 func main() {
 	//Load Crawler Information
-	info = &crawlerInformation{Status: "Running", UrlsCrawled: 0, LastCrawled: make([]string), QueueSize: 0, IndexSize: 0, Errors: make(map[string]string)}
-	info.storeSelf(pool, hashName, value)
+	//info = &crawlerInformation{Status: "Running", UrlsCrawled: 0, LastCrawled: make([]string, 0), QueueSize: 0, IndexSize: 0, Errors: make(map[string]string)}
+	//info.storeSelf(pool, hashName, value)
 
 	var c config
 	loadConfig("config.json", &c)
@@ -75,17 +76,9 @@ func main() {
 		panic(err)
 	}
 	//Initilize redis information
-	pool = redis.Pool{
-		MaxIdle:   50,
-		MaxActive: 0,
-		Wait:      true,
-		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", "127.0.0.1:6379")
-			if err != nil {
-				panic(err.Error())
-			}
-			return c, err
-		},
+	pool, err = redisqueue.MakePool()
+	if err != nil {
+		panic(err)
 	}
 
 	//loadRobots("http://cnn.com")
@@ -138,7 +131,7 @@ func loadRobots(root string) {
 func worker(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		url, err := queue.QueuePop(&pool, "messagequeue")
+		url, err := redisqueue.QueuePop(&pool, "messagequeue")
 		if err != nil || len(url) == 0 {
 			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
@@ -227,12 +220,12 @@ func handleHTML(url string) {
 
 //Returns 1 if added to queue, 0 if not
 func addUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
-	exists, err := queue.HashAdd(pool, hashName, toAdd, "true")
+	exists, err := redisqueue.HashAdd(pool, hashName, toAdd, "true")
 	if err != nil {
 		return 0, err
 	}
 	if exists == 1 {
-		queue.QueuePush(pool, queueName, toAdd)
+		redisqueue.QueuePush(pool, queueName, toAdd)
 		return 1, nil
 	}
 	//Exists == 0 so the field already exists and we didnt add to the queue
