@@ -38,6 +38,16 @@ type crawlerInformation struct {
 	Errors      map[string]string //Map of all errors (Maybe we dont use)
 }
 
+func (c *crawlerInformation) new() {
+	c.Status = "Running"
+	c.UrlsCrawled = 0
+	c.LastCrawled = make([]string, 0)
+	c.QueueSize = 0
+	c.IndexSize = 0
+	c.Errors = make(map[string]string)
+}
+
+//I dont think this should exist. Crawler should be about current crawl... Maybe store at shutdown?
 func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -47,7 +57,17 @@ func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName string) error 
 	return err
 }
 
-var info crawlerInformation
+func (c *crawlerInformation) appendArray(value string) {
+	//Hard coded here
+	if len(c.LastCrawled) > 9 {
+		temp := []string{value}
+		c.LastCrawled = append(temp, c.LastCrawled[1:]...)
+	} else {
+		c.LastCrawled = append(c.LastCrawled, value)
+	}
+}
+
+var info *crawlerInformation
 
 type dbConfig struct {
 	User     string
@@ -61,15 +81,12 @@ type config struct {
 }
 
 func main() {
-	//Load Crawler Information
-	//info = &crawlerInformation{Status: "Running", UrlsCrawled: 0, LastCrawled: make([]string, 0), QueueSize: 0, IndexSize: 0, Errors: make(map[string]string)}
-	//info.storeSelf(pool, hashName, value)
-
 	var c config
 	loadConfig("config.json", &c)
 	wg := new(sync.WaitGroup)
 	var err error
 	//Init the database
+	//TODO: Own module just like we did redis
 	connString := fmt.Sprintf("user=%v password=%v dbname=%v sslmode=%v", c.Db.User, c.Db.Password, c.Db.Db_name, c.Db.Ssl_mode)
 	db, err = sql.Open("postgres", connString)
 	if err != nil {
@@ -82,6 +99,11 @@ func main() {
 	}
 
 	//loadRobots("http://cnn.com")
+
+	//Load Crawler Information
+	info = &crawlerInformation{}
+	info.new()
+	info.storeSelf(&pool, "crawlerstatus")
 
 	//Number of goroutines to create to process urls
 	for i := 0; i < 10; i++ {
@@ -139,6 +161,13 @@ func worker(wg *sync.WaitGroup) {
 		} else {
 			//Consider running in goroutine sometime
 			handleUrl(url)
+			//Update Relevant Information
+			//Todo maybe use a map... Concurrency or something
+			mutex.Lock()
+			info.UrlsCrawled++
+			info.appendArray(url)
+			info.storeSelf(&pool, "crawlerstatus")
+			mutex.Unlock()
 			//Sleep to slow things down...
 			time.Sleep(time.Millisecond * 50)
 		}
