@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"database/sql"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/lib/pq"
@@ -98,7 +97,7 @@ func main() {
 		panic(err)
 	}
 
-	//loadRobots("http://cnn.com")
+	loadRobots("http://cnn.com")
 
 	//Load Crawler Information
 	info = &crawlerInformation{}
@@ -174,59 +173,14 @@ func worker(wg *sync.WaitGroup) {
 	}
 }
 
-//XML structures
-type SiteMapIndex struct {
-	SiteMaps []SiteMap `xml:",any"`
-}
-
-type SiteMap struct {
-	Location string `xml:"loc"`
-	Lastmod  string `xml:"lastmod"`
-}
-
 func handleUrl(url string) {
-	//Temp to handle extensions
-	//TODO Handle the HTML files
-	if path.Ext(url) == ".html" {
+	switch path.Ext(strings.ToLower(url)) {
+	case ".html":
 		handleHTML(url)
+	case ".xml":
+		handleXML(url)
+	default:
 		return
-	}
-	if path.Ext(url) != ".xml" {
-		return
-	}
-	resp, err := http.Get(url)
-	defer resp.Body.Close()
-	if err != nil {
-		panic(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	var sm SiteMapIndex
-	err = xml.Unmarshal(body, &sm)
-	if err != nil {
-		fmt.Println(err)
-	}
-	for _, smo := range sm.SiteMaps {
-		//Check so we dont have super old site maps
-		if len(smo.Lastmod) != 0 {
-			//Simple layout will change
-			layout := "2006-01-02T15:04:05-05:00"
-			t, err := time.Parse(layout, smo.Lastmod)
-			if err != nil {
-				//Do something with error but we will just go on
-			} else {
-				if t.AddDate(0, 2, 0).Before(now) {
-					fmt.Println("Too old!  ", t)
-					continue
-				}
-			}
-		}
-		_, err = addUniqueToQueue(&pool, "urlexists", "messagequeue", smo.Location)
-		if err != nil {
-			fmt.Println(err)
-		}
 	}
 }
 
@@ -244,6 +198,19 @@ func handleHTML(url string) {
 	err = pi.StorePage(db)
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func handleXML(url string) {
+	urls, err := htmlcrawler.GetXmlUrls(url)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, url := range urls {
+		_, err = addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
