@@ -113,6 +113,7 @@ func main() {
 	info.storeSelf(&pool, "crawlerstatus")
 
 	//Number of goroutines to create to process urls
+	go updateCrawlerStatus()
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		worker(wg)
@@ -145,7 +146,6 @@ func worker(wg *sync.WaitGroup) {
 			mutex.Lock()
 			info.UrlsCrawled++
 			info.appendArray(url)
-			info.storeSelf(&pool, "crawlerstatus")
 			mutex.Unlock()
 			//Sleep to slow things down...
 			time.Sleep(time.Millisecond * 50)
@@ -194,7 +194,24 @@ func handleXML(url string) {
 	}
 }
 
+func updateCrawlerStatus() {
+	for {
+		mutex.Lock()
+		size, err := redisqueue.QueueLength(&pool, "messagequeue")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		info.QueueSize = size
+		info.UrlsCrawled = 15000
+		mutex.Unlock()
+		info.storeSelf(&pool, "crawlerstatus")
+		time.Sleep(time.Second * 15)
+	}
+}
+
 //Returns 1 if added to queue, 0 if not
+//TODO move this to the redisqueue package
 func addUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
 	exists, err := redisqueue.HashAdd(pool, hashName, toAdd, "true")
 	if err != nil {

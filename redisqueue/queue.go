@@ -31,6 +31,12 @@ func QueuePush(pool *redis.Pool, queueName string, value string) error {
 	return nil
 }
 
+func QueueLength(pool *redis.Pool, setName string) (int, error) {
+	conn := pool.Get()
+	defer conn.Close()
+	return redis.Int(conn.Do("LLEN", setName))
+}
+
 func HashExists(pool *redis.Pool, setName string, value string) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
@@ -48,4 +54,10 @@ func HashAdd(pool *redis.Pool, setName string, key string, value string) (int, e
 	conn := pool.Get()
 	defer conn.Close()
 	return redis.Int(conn.Do("HSET", setName, key, value))
+}
+
+func HashLength(pool *redis.Pool, setName string) (int, error) {
+	conn := pool.Get()
+	defer conn.Close()
+	return redis.Int(conn.Do("HLEN", setName))
 }
