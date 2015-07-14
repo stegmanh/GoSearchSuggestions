@@ -3,14 +3,12 @@ package main
 import (
 	"./htmlcrawler"
 	"./redisqueue"
-	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/lib/pq"
 	"io/ioutil"
-	"net/http"
 	"path"
 	"strings"
 	"sync"
@@ -20,7 +18,8 @@ import (
 var pool redis.Pool
 var db *sql.DB
 
-var robots = make(map[string]bool)
+var disallowedUrls = make(map[string]bool)
+var allowed []string
 var mutex = &sync.Mutex{}
 
 var now = time.Now()
@@ -97,7 +96,16 @@ func main() {
 		panic(err)
 	}
 
-	loadRobots("http://cnn.com")
+	disallowedUrls, allowed, err = htmlcrawler.LoadRobots("http://cnn.com")
+	if err != nil {
+		panic(err)
+	}
+	for _, url := range allowed {
+		_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	//Load Crawler Information
 	info = &crawlerInformation{}
@@ -119,34 +127,6 @@ func loadConfig(path string, c *config) {
 		panic(err)
 	}
 	err = json.Unmarshal(content, c)
-}
-
-//TODO: Use path to join paths instead of concat
-func loadRobots(root string) {
-	resp, err := http.Get(root + "/robots.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		information := strings.SplitN(scanner.Text(), ":", 2)
-		if len(information) == 2 {
-			switch information[0] {
-			case "Sitemap":
-				_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", strings.TrimSpace(information[1]))
-				if err != nil {
-					fmt.Println(err)
-				}
-			case "Disallow":
-				disallowedUrl := root + strings.TrimSpace(information[1])
-				robots[disallowedUrl] = true
-			}
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
 }
 
 func worker(wg *sync.WaitGroup) {
