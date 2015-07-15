@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./crawlerinformation"
 	"./htmlcrawler"
 	"./redisqueue"
 	"database/sql"
@@ -25,47 +26,8 @@ var mutex = &sync.Mutex{}
 var now = time.Now()
 
 //Consider moving this + redis to its own repo -- This way we have consistent package accross all things
-type crawlerInformation struct {
-	Status string //Running, stopped, idle
-	// Cpu         string            //Cpu usage -- Not doing yet
-	// Ram         string            //Ram usage -- Not doing yet
-	UrlsCrawled int               //# Of total urls crawled
-	LastCrawled []string          //Last of some arbitrary number
-	QueueSize   int               //Size of the queue
-	IndexSize   int               //Size of DB
-	Errors      map[string]string //Map of all errors (Maybe we dont use)
-}
 
-func (c *crawlerInformation) new() {
-	c.Status = "Running"
-	c.UrlsCrawled = 0
-	c.LastCrawled = make([]string, 0)
-	c.QueueSize = 0
-	c.IndexSize = 0
-	c.Errors = make(map[string]string)
-}
-
-//I dont think this should exist. Crawler should be about current crawl... Maybe store at shutdown?
-func (c *crawlerInformation) storeSelf(pool *redis.Pool, hashName string) error {
-	data, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
-	_, err = redisqueue.HashAdd(pool, hashName, "data", string(data))
-	return err
-}
-
-func (c *crawlerInformation) appendArray(value string) {
-	//Hard coded here
-	if len(c.LastCrawled) > 9 {
-		temp := []string{value}
-		c.LastCrawled = append(temp, c.LastCrawled[1:]...)
-	} else {
-		c.LastCrawled = append(c.LastCrawled, value)
-	}
-}
-
-var info *crawlerInformation
+var info *crawlerinformation.CrawlerInformation
 
 type dbConfig struct {
 	User     string
@@ -101,16 +63,16 @@ func main() {
 		panic(err)
 	}
 	for _, url := range allowed {
-		_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		_, err := redisqueue.AddUniqueToQueue(&pool, "urlexists", "messagequeue", url)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 
 	//Load Crawler Information
-	info = &crawlerInformation{}
-	info.new()
-	info.storeSelf(&pool, "crawlerstatus")
+	info = &crawlerinformation.CrawlerInformation{}
+	info.New()
+	info.StoreSelf(&pool, "crawlerstatus")
 
 	//Number of goroutines to create to process urls
 	go updateCrawlerStatus()
@@ -145,7 +107,7 @@ func worker(wg *sync.WaitGroup) {
 			//Todo maybe use a map... Concurrency or something
 			mutex.Lock()
 			info.UrlsCrawled++
-			info.appendArray(url)
+			info.AppendArray(url)
 			mutex.Unlock()
 			//Sleep to slow things down...
 			time.Sleep(time.Millisecond * 50)
@@ -154,40 +116,31 @@ func worker(wg *sync.WaitGroup) {
 }
 
 func handleUrl(url string) {
+	var urlsToAdd []string
+	var err error
 	switch path.Ext(strings.ToLower(url)) {
 	case ".html":
-		handleHTML(url)
-	case ".xml":
-		handleXML(url)
-	default:
-		return
-	}
-}
-
-func handleHTML(url string) {
-	pi, err := htmlcrawler.CrawlHTML(url)
-	if err != nil {
-		fmt.Println(err)
-	}
-	for _, url := range pi.Urls {
-		_, err := addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		pi, err := htmlcrawler.CrawlHTML(url)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		urlsToAdd = pi.Urls
+		err = pi.StorePage(db)
 		if err != nil {
 			fmt.Println(err)
 		}
+	case ".xml":
+		urlsToAdd, err = htmlcrawler.GetXmlUrls(url)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	default:
+		return
 	}
-	err = pi.StorePage(db)
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func handleXML(url string) {
-	urls, err := htmlcrawler.GetXmlUrls(url)
-	if err != nil {
-		fmt.Println(err)
-	}
-	for _, url := range urls {
-		_, err = addUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+	for _, url := range urlsToAdd {
+		_, err := redisqueue.AddUniqueToQueue(&pool, "urlexists", "messagequeue", url)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -205,22 +158,7 @@ func updateCrawlerStatus() {
 		info.QueueSize = size
 		info.UrlsCrawled = 15000
 		mutex.Unlock()
-		info.storeSelf(&pool, "crawlerstatus")
+		info.StoreSelf(&pool, "crawlerstatus")
 		time.Sleep(time.Second * 15)
 	}
-}
-
-//Returns 1 if added to queue, 0 if not
-//TODO move this to the redisqueue package
-func addUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
-	exists, err := redisqueue.HashAdd(pool, hashName, toAdd, "true")
-	if err != nil {
-		return 0, err
-	}
-	if exists == 1 {
-		redisqueue.QueuePush(pool, queueName, toAdd)
-		return 1, nil
-	}
-	//Exists == 0 so the field already exists and we didnt add to the queue
-	return 0, nil
 }

@@ -37,6 +37,20 @@ func QueueLength(pool *redis.Pool, setName string) (int, error) {
 	return redis.Int(conn.Do("LLEN", setName))
 }
 
+//Returns 1 if added to queue, 0 if not
+func AddUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
+	exists, err := HashAdd(pool, hashName, toAdd, "true")
+	if err != nil {
+		return 0, err
+	}
+	if exists == 1 {
+		QueuePush(pool, queueName, toAdd)
+		return 1, nil
+	}
+	//Exists == 0 so the field already exists and we didnt add to the queue
+	return 0, nil
+}
+
 func HashExists(pool *redis.Pool, setName string, value string) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
