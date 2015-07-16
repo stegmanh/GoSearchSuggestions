@@ -77,7 +77,7 @@ func main() {
 	go updateCrawlerStatus()
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		worker(wg)
+		go worker(wg)
 	}
 	wg.Wait()
 }
