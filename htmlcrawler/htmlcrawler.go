@@ -35,7 +35,11 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, attr := range n.Attr {
 			if attr.Key == "href" {
-				pi.Urls = append(pi.Urls, attr.Val)
+				url := attr.Key
+				if strings.HasPrefix(url, "/") {
+					url = "http://cnn.com" + url
+				}
+				pi.Urls = append(pi.Urls, url)
 			}
 		}
 	}
