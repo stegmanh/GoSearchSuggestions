@@ -25,8 +25,7 @@ var mutex = &sync.Mutex{}
 
 var now = time.Now()
 
-//Consider moving this + redis to its own repo -- This way we have consistent package accross all things
-
+//TODO: Consider polling CNN homepage or main sitemap constantly for up to date information!
 var info *crawlerinformation.CrawlerInformation
 
 type dbConfig struct {
