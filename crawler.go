@@ -26,6 +26,8 @@ var mutex = &sync.Mutex{}
 var now = time.Now()
 
 //TODO: Consider polling CNN homepage or main sitemap constantly for up to date information!
+//TODO: Make sure we only crawl CNN
+//TODO: Make sure we append base to start of URL in cases where we have relative links
 var info *crawlerinformation.CrawlerInformation
 
 type dbConfig struct {
@@ -113,6 +115,76 @@ func worker(wg *sync.WaitGroup) {
 		}
 	}
 }
+
+//Worker
+var WorkerQueue chan chan string
+
+type Worker struct {
+	Url         chan string
+	WorkerQueue chan chan string
+	Commands    chan string
+}
+
+func NewWorker(workerQueue chan chan string) Worker {
+	worker := Worker{
+		Url:         make(chan string),
+		WorkerQueue: workerQueue,
+		Commands:    make(chan string),
+	}
+	return worker
+}
+
+func (w Worker) Start() {
+	go func() {
+		for {
+			w.WorkerQueue <- w.Url
+
+			select {
+			case url := <-w.Url:
+				handleUrl(url)
+				//Update Relevant Information
+				//Todo maybe use a map... Concurrency or something
+				mutex.Lock()
+				info.UrlsCrawled++
+				info.AppendArray(url)
+				mutex.Unlock()
+				//Sleep to slow things down...
+				time.Sleep(time.Millisecond * 50)
+			case command := <-w.Commands:
+				fmt.Println(command)
+			}
+		}
+	}()
+}
+
+func (w Worker) SendCommand(c string) {
+	go func() {
+		w.Commands <- c
+	}()
+}
+
+func Dispatch(toDispatch int) {
+	WorkerQueue := make(chan chan string, toDispatch)
+
+	for i := 0; i < toDispatch; i++ {
+		worker := NewWorker(WorkerQueue)
+		worker.Start()
+	}
+
+	for {
+		url, err := redisqueue.QueuePop(&pool, "messagequeue")
+		if err != nil || len(url) == 0 {
+			fmt.Println(len(url), err)
+			fmt.Println("Sleeping..")
+			time.Sleep(3 * time.Second)
+		} else {
+			worker := <-WorkerQueue
+			worker <- url
+		}
+	}
+}
+
+//End Worker
 
 func handleUrl(url string) {
 	var urlsToAdd []string
