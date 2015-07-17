@@ -97,7 +97,7 @@ func worker(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		url, err := redisqueue.QueuePop(&pool, "messagequeue")
-		if err != nil || len(url) == 0 {
+		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
 			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
 			time.Sleep(3 * time.Second)
