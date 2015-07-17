@@ -6,8 +6,11 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/net/html"
 	"net/http"
+	"regexp"
 	"strings"
 )
+
+var validUrl = regexp.MustCompile(`http[s]?://.*cnn.com.*`)
 
 type PageInformation struct {
 	Title, Date, Source string
@@ -38,6 +41,10 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 				url := attr.Key
 				if strings.HasPrefix(url, "/") {
 					url = "http://cnn.com" + url
+				} else {
+					if !validUrl.MatchString(url) {
+						continue
+					}
 				}
 				pi.Urls = append(pi.Urls, url)
 			}
