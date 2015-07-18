@@ -75,3 +75,21 @@ func HashLength(pool *redis.Pool, setName string) (int, error) {
 	defer conn.Close()
 	return redis.Int(conn.Do("HLEN", setName))
 }
+
+func ClearStorage(pool *redis.Pool, storageName string) (int, error) {
+	conn := pool.Get()
+	defer conn.Close()
+	return redis.Int(conn.Do("DEL", storageName))
+}
+
+func ClearMultipleStorage(pool *redis.Pool, storageNames []string) (int, error) {
+	count := 0
+	//var err error
+	conn := pool.Get()
+	defer conn.Close()
+	for _, name := range storageNames {
+		del, _ := redis.Int(conn.Do("DEL", name))
+		count += del
+	}
+	return count, nil
+}

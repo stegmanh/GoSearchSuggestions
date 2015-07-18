@@ -27,7 +27,7 @@ var now = time.Now()
 
 //TODO: Consider polling CNN homepage or main sitemap constantly for up to date information!
 //TODO: Move dispatcher to a seperate file/location -- Maybe html crawler?
-//TODO: Add support for fresh runs -- Flag to delete redis info before starting
+//TODO: Add support for fresh runs -- Flag to delete redis info before starting -- FIX THIS
 //TODO: Make sure we only crawl CNN
 //TODO: Make sure we append base to start of URL in cases where we have relative links
 var info *crawlerinformation.CrawlerInformation
@@ -59,6 +59,16 @@ func main() {
 	pool, err = redisqueue.MakePool()
 	if err != nil {
 		panic(err)
+	}
+
+	//Fresh Start?
+	freshStart := true
+	if freshStart {
+		count, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists, crawlerstatus, messagequeue"})
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(count)
 	}
 
 	disallowedUrls, allowed, err = htmlcrawler.LoadRobots("http://cnn.com")
