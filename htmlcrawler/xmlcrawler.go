@@ -3,7 +3,7 @@ package htmlcrawler
 import (
 	"encoding/xml"
 	"errors"
-	"fmt" //Debugging
+	//"fmt" //Debugging
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -40,22 +40,30 @@ func GetXmlUrls(url string) ([]string, error) {
 		return urls, errors.New("Error unmarshing the XML")
 	}
 	for _, smo := range sm.SiteMaps {
-		//Check so we dont have super old site maps
 		if len(smo.Lastmod) != 0 {
-			//Simple layout will change
-			layout := "2006-01-02T15:04:05-05:00"
-			t, err := time.Parse(layout, smo.Lastmod)
-			if err != nil {
-				fmt.Println(smo.Lastmod)
-				//Do something with error but we will just go on
-			} else {
-				//If 2 months old continue, else it will add to the pool
-				if t.AddDate(0, 2, 0).Before(now) {
-					continue
-				}
+			layouts := []string{"2006-01-02T15:04:05-05:00", "2006-01-02T15:04:05Z", "2006-01-02T15:04:05z", "2006-01-02T15:04:05z"}
+			t, err := parseAgainstLayouts(layouts, smo.Lastmod)
+			if err != nil || t.AddDate(0, 2, 0).Before(now) {
+				continue
 			}
 		}
 		urls = append(urls, smo.Location)
 	}
 	return urls, nil
+}
+
+//Pass in an array of layouts and try parsing the string against each
+//Returns when layout parse doesn't return error or out of layouts
+func parseAgainstLayouts(layouts []string, value string) (time.Time, error) {
+	var t time.Time
+	var err error
+	for _, layout := range layouts {
+		t, err = time.Parse(layout, value)
+		if err != nil {
+			continue
+		} else {
+			return t, nil
+		}
+	}
+	return t, err
 }
