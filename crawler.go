@@ -44,7 +44,7 @@ type config struct {
 func main() {
 	var c config
 	loadConfig("config.json", &c)
-	wg := new(sync.WaitGroup)
+	//	wg := new(sync.WaitGroup)
 	var err error
 	//Init the database
 	//TODO: Own module just like we did redis
@@ -77,11 +77,12 @@ func main() {
 
 	//Number of goroutines to create to process urls
 	go updateCrawlerStatus()
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go worker(wg)
-	}
-	wg.Wait()
+	Dispatch(10)
+	// for i := 0; i < 10; i++ {
+	// 	wg.Add(1)
+	// 	go worker(wg)
+	// }
+	// wg.Wait()
 }
 
 func loadConfig(path string, c *config) {
@@ -93,28 +94,28 @@ func loadConfig(path string, c *config) {
 	err = json.Unmarshal(content, c)
 }
 
-func worker(wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		url, err := redisqueue.QueuePop(&pool, "messagequeue")
-		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
-			fmt.Println(len(url), err)
-			fmt.Println("Sleeping..")
-			time.Sleep(3 * time.Second)
-		} else {
-			//Consider running in goroutine sometime
-			handleUrl(url)
-			//Update Relevant Information
-			//Todo maybe use a map... Concurrency or something
-			mutex.Lock()
-			info.UrlsCrawled++
-			info.AppendArray(url)
-			mutex.Unlock()
-			//Sleep to slow things down...
-			time.Sleep(time.Millisecond * 50)
-		}
-	}
-}
+// func worker(wg *sync.WaitGroup) {
+// 	defer wg.Done()
+// 	for {
+// 		url, err := redisqueue.QueuePop(&pool, "messagequeue")
+// 		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
+// 			fmt.Println(len(url), err)
+// 			fmt.Println("Sleeping..")
+// 			time.Sleep(3 * time.Second)
+// 		} else {
+// 			//Consider running in goroutine sometime
+// 			handleUrl(url)
+// 			//Update Relevant Information
+// 			//Todo maybe use a map... Concurrency or something
+// 			mutex.Lock()
+// 			info.UrlsCrawled++
+// 			info.AppendArray(url)
+// 			mutex.Unlock()
+// 			//Sleep to slow things down...
+// 			time.Sleep(time.Millisecond * 50)
+// 		}
+// 	}
+// }
 
 //Worker
 var WorkerQueue chan chan string
@@ -173,7 +174,7 @@ func Dispatch(toDispatch int) {
 
 	for {
 		url, err := redisqueue.QueuePop(&pool, "messagequeue")
-		if err != nil || len(url) == 0 {
+		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
 			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
 			time.Sleep(3 * time.Second)
@@ -181,6 +182,12 @@ func Dispatch(toDispatch int) {
 			worker := <-WorkerQueue
 			worker <- url
 		}
+	}
+}
+
+func DispatchMessage(WorkerQueue chan chan string, message string) {
+	for worker := range WorkerQueue {
+		worker <- message
 	}
 }
 
