@@ -41,10 +41,9 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 				url := attr.Key
 				if strings.HasPrefix(url, "/") {
 					url = "http://cnn.com" + url
-				} else {
-					if !validUrl.MatchString(url) {
-						continue
-					}
+				}
+				if !validUrl.MatchString(url) {
+					continue
 				}
 				pi.Urls = append(pi.Urls, url)
 			}

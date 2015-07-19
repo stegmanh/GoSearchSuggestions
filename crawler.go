@@ -27,7 +27,6 @@ var now = time.Now()
 
 //TODO: Consider polling CNN homepage or main sitemap constantly for up to date information!
 //TODO: Move dispatcher to a seperate file/location -- Maybe html crawler?
-//TODO: Add support for fresh runs -- Flag to delete redis info before starting -- FIX THIS
 //TODO: Make sure we only crawl CNN
 //TODO: Make sure we append base to start of URL in cases where we have relative links
 var info *crawlerinformation.CrawlerInformation
@@ -46,8 +45,8 @@ type config struct {
 func main() {
 	var c config
 	loadConfig("config.json", &c)
-	//	wg := new(sync.WaitGroup)
 	var err error
+
 	//Init the database
 	//TODO: Own module just like we did redis
 	connString := fmt.Sprintf("user=%v password=%v dbname=%v sslmode=%v", c.Db.User, c.Db.Password, c.Db.Db_name, c.Db.Ssl_mode)
@@ -64,7 +63,7 @@ func main() {
 	//Fresh Start?
 	freshStart := true
 	if freshStart {
-		count, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists", "crawlerstatus", "messagequeue"})
+		_, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists", "crawlerstatus", "messagequeue"})
 		if err != nil {
 			panic(err)
 		}
@@ -86,14 +85,8 @@ func main() {
 	info.New()
 	info.StoreSelf(&pool, "crawlerstatus")
 
-	//Number of goroutines to create to process urls
 	go updateCrawlerStatus()
 	Dispatch(10)
-	// for i := 0; i < 10; i++ {
-	// 	wg.Add(1)
-	// 	go worker(wg)
-	// }
-	// wg.Wait()
 }
 
 func loadConfig(path string, c *config) {
@@ -104,29 +97,6 @@ func loadConfig(path string, c *config) {
 	}
 	err = json.Unmarshal(content, c)
 }
-
-// func worker(wg *sync.WaitGroup) {
-// 	defer wg.Done()
-// 	for {
-// 		url, err := redisqueue.QueuePop(&pool, "messagequeue")
-// 		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
-// 			fmt.Println(len(url), err)
-// 			fmt.Println("Sleeping..")
-// 			time.Sleep(3 * time.Second)
-// 		} else {
-// 			//Consider running in goroutine sometime
-// 			handleUrl(url)
-// 			//Update Relevant Information
-// 			//Todo maybe use a map... Concurrency or something
-// 			mutex.Lock()
-// 			info.UrlsCrawled++
-// 			info.AppendArray(url)
-// 			mutex.Unlock()
-// 			//Sleep to slow things down...
-// 			time.Sleep(time.Millisecond * 50)
-// 		}
-// 	}
-// }
 
 //Worker
 var WorkerQueue chan chan string
