@@ -84,12 +84,13 @@ func ClearStorage(pool *redis.Pool, storageName string) (int, error) {
 
 func ClearMultipleStorage(pool *redis.Pool, storageNames []string) (int, error) {
 	count := 0
-	//var err error
+	var deleted int
+	var err error = nil
 	conn := pool.Get()
 	defer conn.Close()
 	for _, name := range storageNames {
-		del, _ := redis.Int(conn.Do("DEL", name))
-		count += del
+		deleted, err = redis.Int(conn.Do("DEL", name))
+		count = count + deleted
 	}
-	return count, nil
+	return count, err
 }

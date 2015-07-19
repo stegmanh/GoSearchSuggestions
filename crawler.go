@@ -64,11 +64,10 @@ func main() {
 	//Fresh Start?
 	freshStart := true
 	if freshStart {
-		count, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists, crawlerstatus, messagequeue"})
+		count, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists", "crawlerstatus", "messagequeue"})
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(count)
 	}
 
 	disallowedUrls, allowed, err = htmlcrawler.LoadRobots("http://cnn.com")
