@@ -28,6 +28,7 @@ var now = time.Now()
 //TODO: Consider polling CNN homepage or main sitemap constantly for up to date information!
 //TODO: Move dispatcher to a seperate file/location -- Maybe html crawler?
 //TODO: Make sure we only crawl CNN
+//TODO: Figure out why we can only crawl 5000 ulrs
 //TODO: Make sure we append base to start of URL in cases where we have relative links
 var info *crawlerinformation.CrawlerInformation
 

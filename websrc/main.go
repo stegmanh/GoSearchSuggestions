@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./trie"
+	"GoSearchSuggestions/trie"
 	"bufio"
 	"bytes"
 	"database/sql"

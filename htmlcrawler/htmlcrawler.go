@@ -44,6 +44,7 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 				}
 				if !validUrl.MatchString(url) {
 					continue
+					fmt.Println("Invalid URL to crawl ", url)
 				}
 				pi.Urls = append(pi.Urls, url)
 			}
