@@ -3,12 +3,12 @@ package trie
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 )
 
 var plainWord = regexp.MustCompile(`(^[a-zA-Z_ ]*$)`)
+var alreadyAdded = make(map[string]bool)
 
 type Trie struct {
 	root *trieNode
@@ -30,17 +30,16 @@ func (t *Trie) BuildTrie(scanner *bufio.Scanner) {
 	for scanner.Scan() {
 		s := strings.ToLower(scanner.Text())
 		matched := plainWord.MatchString(s)
-		if !matched {
-			continue
+		if matched {
+			s = strings.Replace(s, "_", " ", -1)
+			t.Add(s)
+			count++
 		}
-		s = strings.Replace(s, "_", " ", -1)
-		t.Add(s)
-		count++
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		fmt.Println("Error adding to trie: ", err)
 	}
-	fmt.Println("Done")
+	fmt.Println("Build Trie")
 }
 
 func (t *Trie) Add(s string) {
@@ -100,8 +99,8 @@ func (t *Trie) Add(s string) {
 }
 
 func (t *Trie) Find(searchString string) []string {
+	searchString = strings.ToLower(searchString)
 	if !plainWord.MatchString(searchString) {
-		fmt.Println("Not valid")
 		return make([]string, 0)
 	}
 	current := t.root

@@ -3,3 +3,4 @@ trieAddBackup.go
 snippets.go
 test*.go
 config.json
+cleanfile.go

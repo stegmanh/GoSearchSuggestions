@@ -105,7 +105,7 @@ func main() {
 	}
 
 	//Read words.txt
-	file, err := os.Open("words.txt")
+	file, err := os.Open("./websrc/static/text/titles.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
