@@ -2,11 +2,10 @@ package routes
 
 import (
 	"GoSearchSuggestions/trie"
+	"GoSearchSuggestions/websrc/models"
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
 	"net/http"
 	"regexp"
 	"strings"
@@ -56,14 +55,14 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>%s</h1>", "Hello Noah!")
 }
 
-func DbSearchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
 	articleTitle := r.FormValue("title")
 	if len(articleTitle) == 0 {
 		fmt.Fprintf(w, "%v", "Please input an article title")
 		return
 	}
 	articleTitle = strings.Join(strings.Split(articleTitle, " "), " | ")
-	rows, err := db.Query(ftsSearch, articleTitle)
+	rows, err := models.Db.Query(ftsSearch, articleTitle)
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
 		return

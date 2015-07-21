@@ -3,20 +3,15 @@ package main
 import (
 	"GoSearchSuggestions/trie"
 	"GoSearchSuggestions/websrc/app/routes"
+	"GoSearchSuggestions/websrc/models"
 	"bufio"
-	"database/sql"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 )
 
 func main() {
-	//Init DB, panic if fails
-	db, err := sql.Open("postgres", "user=postgres password=qwert12345 dbname=postgres sslmode=disable")
-	if err != nil {
-		panic(err)
-	}
+	models.Init()
 
 	//Read words.txt
 	file, err := os.Open("./websrc/static/text/titles.txt")
@@ -35,7 +30,7 @@ func main() {
 		routes.SearchHandler(w, r, trieTree)
 	})
 	http.HandleFunc("/dbsearch", func(w http.ResponseWriter, r *http.Request) {
-		routes.DbSearchHandler(w, r, db)
+		routes.DbSearchHandler(w, r)
 	})
 	http.ListenAndServe(":8080", nil)
 }
