@@ -26,12 +26,5 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	trieTree.BuildTrie(scanner)
 
-	http.HandleFunc("/", routes.IndexHandler)
-	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
-		routes.SearchHandler(w, r, trieTree)
-	})
-	http.HandleFunc("/dbsearch", func(w http.ResponseWriter, r *http.Request) {
-		routes.DbSearchHandler(w, r)
-	})
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", routes.InitHandler())
 }
