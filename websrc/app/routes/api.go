@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 type Suggestions struct {
@@ -16,22 +15,9 @@ type Suggestions struct {
 	Results []string
 }
 
-type Article struct {
-	Title  string `json:"title"`
-	Date   string `json:"date"`
-	Source string `json:"source"`
-	Body   string `json:"body"`
-}
-
-type ArticleResponse struct {
-	Articles []Article `json:"data"`
-}
-
 var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
 var trieTree *trie.Trie = nil
 var searchHistory map[string]int
-
-var ftsSearch string = "SELECT title, source, body, created_at FROM articles, to_tsvector(title) tvt, to_tsquery($1) tvq WHERE tvt @@ tvq ORDER BY ts_rank(tvt, tvq) DESC LIMIT 5"
 
 func SearchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 	searchTerm := r.FormValue("q")
@@ -61,25 +47,11 @@ func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%v", "Please input an article title")
 		return
 	}
-	articleTitle = strings.Join(strings.Split(articleTitle, " "), " | ")
-	rows, err := models.Db.Query(ftsSearch, articleTitle)
+	articles, err := models.SearchArticles(articleTitle)
 	if err != nil {
-		fmt.Fprintf(w, "%v", err)
-		return
+		fmt.Fprintf(w, "%#v", err)
 	}
-	defer rows.Close()
-	toReturn := ArticleResponse{Articles: make([]Article, 0)}
-	for rows.Next() {
-		var title, createdAt, source, body string
-		err = rows.Scan(&title, &source, &body, &createdAt)
-		if err != nil {
-			fmt.Println("Got an error here..", err)
-			continue
-		}
-		articleAdd := Article{Title: title, Date: createdAt, Source: source, Body: body}
-		toReturn.Articles = append(toReturn.Articles, articleAdd)
-	}
-	js, err := json.Marshal(toReturn)
+	js, err := json.Marshal(articles)
 	if err != nil {
 		fmt.Fprintf(w, "%#v", "Error encoding json")
 		fmt.Println(err)
