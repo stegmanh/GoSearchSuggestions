@@ -22,7 +22,7 @@ var ftsSearch string = "SELECT title, source, body, created_at, id FROM articles
 func GetArticle(id int) (Article, error) {
 	var title, createdAt, source, body string
 	var ai int
-	err := Db.QueryRow("SELECT * FROM articles WHERE id = $1", id).Scan(&title, &source, &body, &createdAt, &ai)
+	err := db.QueryRow("SELECT * FROM articles WHERE id = $1", id).Scan(&title, &source, &body, &createdAt, &ai)
 	article := Article{Title: title, Date: createdAt, Source: source, Body: body, Id: ai}
 	switch {
 	case err != nil:
@@ -35,7 +35,7 @@ func GetArticle(id int) (Article, error) {
 func SearchArticles(query string) (ArticleResponse, error) {
 	var response = ArticleResponse{Articles: make([]Article, 0)}
 	query = strings.Join(strings.Split(query, " "), " | ")
-	rows, err := Db.Query(ftsSearch, query)
+	rows, err := db.Query(ftsSearch, query)
 	if err != nil {
 		return response, err
 	}

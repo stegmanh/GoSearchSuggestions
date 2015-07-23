@@ -1,15 +1,20 @@
 package models
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	_ "github.com/lib/pq"
+
+	"GoSearchSuggestions/trie"
 )
 
-var Db *sql.DB
+var db *sql.DB
+var Trie *trie.Trie
 var err error
 
 type dbConfig struct {
@@ -27,10 +32,21 @@ func Init() {
 	var c config
 	loadConfig("config.json", &c)
 	connString := fmt.Sprintf("user=%v password=%v dbname=%v sslmode=%v", c.Db.User, c.Db.Password, c.Db.Db_name, c.Db.Ssl_mode)
-	Db, err = sql.Open("postgres", connString)
+	db, err = sql.Open("postgres", connString)
 	if err != nil {
 		panic(err)
 	}
+
+	file, err := os.Open("./websrc/static/text/words.txt")
+	if err != nil {
+		panic("Error Loading Trie")
+	}
+	defer file.Close()
+
+	Trie := &trie.Trie{}
+	Trie.Initialize()
+	scanner := bufio.NewScanner(file)
+	Trie.BuildTrie(scanner)
 }
 
 func loadConfig(path string, c *config) {

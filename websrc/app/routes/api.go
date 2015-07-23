@@ -28,7 +28,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 		fmt.Fprintf(w, "%#v", "Please send search results")
 		return
 	}
-	searchResults := t.Find(searchTerm)
+	searchResults := models.Trie.Find(searchTerm)
 	responseJSON := Suggestions{Term: searchTerm, Results: searchResults}
 	js, err := json.Marshal(responseJSON)
 	if err != nil {
@@ -38,10 +38,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
-}
-
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "<h1>%s</h1>", "Hello Noah!")
 }
 
 func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
