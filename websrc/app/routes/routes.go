@@ -21,5 +21,5 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("Welcome")))
+	http.ServeFile(w, r, "./websrc/views/index.html")
 }

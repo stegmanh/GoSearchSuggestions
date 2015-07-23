@@ -3,7 +3,6 @@ package routes
 import (
 	"GoSearchSuggestions/trie"
 	"GoSearchSuggestions/websrc/models"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +12,10 @@ import (
 type Suggestions struct {
 	Term    string
 	Results []string
+}
+
+type ErrorResponse struct {
+	Err string `json:"error"`
 }
 
 var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
@@ -42,25 +45,37 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	articleTitle := r.FormValue("title")
 	if len(articleTitle) == 0 {
-		fmt.Fprintf(w, "%v", "Please input an article title")
+		response := ErrorResponse{Err: "You must input a title"}
+		ReponseJSON(w, response, http.StatusNotAcceptable)
 		return
 	}
 	articles, err := models.SearchArticles(articleTitle)
 	if err != nil {
 		fmt.Fprintf(w, "%#v", err)
-	}
-	js, err := json.Marshal(articles)
-	if err != nil {
-		fmt.Fprintf(w, "%#v", "Error encoding json")
-		fmt.Println(err)
+		response := ErrorResponse{Err: "Error Reading from Database"}
+		ReponseJSON(w, response, http.StatusInternalServerError)
 		return
 	}
-	//Unencode.. This is disguesting but I can't find much else...
-	js = bytes.Replace(js, []byte("\\u003c"), []byte("<"), -1)
-	js = bytes.Replace(js, []byte("\\u003e"), []byte(">"), -1)
-	js = bytes.Replace(js, []byte("\\u0026"), []byte("&"), -1)
+	/*
+		Disguesting
+			for _, article := range articles.Articles {
+				article.Body = bytes.Replace(article.Body, []byte("\\u003c"), []byte("<"), -1)
+				article.Body = bytes.Replace(article.Body, []byte("\\u003e"), []byte(">"), -1)
+				article.Body = bytes.Replace(article.Body, []byte("\\u0026"), []byte("&"), -1)
+			}
+	*/
+	ReponseJSON(w, articles, http.StatusOK)
+}
+
+func ReponseJSON(w http.ResponseWriter, i interface{}, status int) {
+	json, err := json.MarshalIndent(i, "", " ")
+	if err != nil {
+		http.Error(w, "Error Encoding JSON", http.StatusInternalServerError)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	w.WriteHeader(status)
+	w.Write(json)
 }
