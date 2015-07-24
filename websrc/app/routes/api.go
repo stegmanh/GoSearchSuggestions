@@ -22,7 +22,7 @@ var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
 var trieTree *trie.Trie = nil
 var searchHistory map[string]int
 
-func SearchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.FormValue("q")
 	if len(searchTerm) == 0 {
 		fmt.Fprintf(w, "%#v", "Please send search results")
@@ -30,14 +30,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, t *trie.Trie) {
 	}
 	searchResults := models.Trie.Find(searchTerm)
 	responseJSON := Suggestions{Term: searchTerm, Results: searchResults}
-	js, err := json.Marshal(responseJSON)
-	if err != nil {
-		fmt.Fprintf(w, "%#v", "Error encoding json")
-		fmt.Println(err)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	ReponseJSON(w, responseJSON, http.StatusOK)
 }
 
 func DbSearchHandler(w http.ResponseWriter, r *http.Request) {

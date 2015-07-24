@@ -12,6 +12,7 @@ func InitHandler() http.Handler {
 	router.HandleFunc("/", Home)
 	router.HandleFunc("/dashboard", Dashboard)
 	router.HandleFunc("/articles", DbSearchHandler)
+	router.HandleFunc("/autocomplete", SearchHandler)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./websrc/static/"))))
 	return router
 }
