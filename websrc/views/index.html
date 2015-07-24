@@ -6,7 +6,16 @@
 
 	<link rel="stylesheet" type="text/css" href="static/css/main.css">
 </head>
-<body>
+<body ng-app="SearchApp" ng-controller="SearchController">
 	<h1>Hello World!</h1>
+
+	<input type="text" ng-model="searchString" placeholder="Search Titles" ng-keyup="search(searchString)">
+
+	<div ng-repeat="n in [42, 42, 43, 43] track by $index">
+		{{n}}
+	</div>
+
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
+	<script type="text/javascript" src="static/js/main.js"></script>
 </body>
 </html>

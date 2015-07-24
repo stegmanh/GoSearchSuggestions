@@ -37,13 +37,13 @@ func Init() {
 		panic(err)
 	}
 
-	file, err := os.Open("./websrc/static/text/words.txt")
+	file, err := os.Open("./text/words.txt")
 	if err != nil {
 		panic("Error Loading Trie")
 	}
 	defer file.Close()
 
-	Trie := &trie.Trie{}
+	Trie = &trie.Trie{}
 	Trie.Initialize()
 	scanner := bufio.NewScanner(file)
 	Trie.BuildTrie(scanner)
