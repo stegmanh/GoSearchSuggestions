@@ -5,7 +5,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-func QueuePop(pool *redis.Pool, queueName string) (string, error) {
+func QueuePop(queueName string) (string, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	resp, err := redis.String(conn.Do("RPOP", queueName))
@@ -18,7 +18,7 @@ func QueuePop(pool *redis.Pool, queueName string) (string, error) {
 	return resp, nil
 }
 
-func QueuePush(pool *redis.Pool, queueName string, value string) error {
+func QueuePush(queueName string, value string) error {
 	conn := pool.Get()
 	defer conn.Close()
 	if len(value) == 0 {
@@ -31,27 +31,27 @@ func QueuePush(pool *redis.Pool, queueName string, value string) error {
 	return nil
 }
 
-func QueueLength(pool *redis.Pool, setName string) (int, error) {
+func QueueLength(setName string) (int, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	return redis.Int(conn.Do("LLEN", setName))
 }
 
 //Returns 1 if added to queue, 0 if not
-func AddUniqueToQueue(pool *redis.Pool, hashName, queueName, toAdd string) (int, error) {
-	exists, err := HashAdd(pool, hashName, toAdd, "true")
+func AddUniqueToQueue(hashName, queueName, toAdd string) (int, error) {
+	exists, err := HashAdd(hashName, toAdd, "true")
 	if err != nil {
 		return 0, err
 	}
 	if exists == 1 {
-		QueuePush(pool, queueName, toAdd)
+		QueuePush(queueName, toAdd)
 		return 1, nil
 	}
 	//Exists == 0 so the field already exists and we didnt add to the queue
 	return 0, nil
 }
 
-func HashExists(pool *redis.Pool, setName string, value string) (bool, error) {
+func HashExists(setName string, value string) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	resp, err := redis.Int(conn.Do("HEXISTS", setName, value))
@@ -64,25 +64,25 @@ func HashExists(pool *redis.Pool, setName string, value string) (bool, error) {
 	return false, nil
 }
 
-func HashAdd(pool *redis.Pool, setName string, key string, value string) (int, error) {
+func HashAdd(setName string, key string, value string) (int, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	return redis.Int(conn.Do("HSET", setName, key, value))
 }
 
-func HashLength(pool *redis.Pool, setName string) (int, error) {
+func HashLength(setName string) (int, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	return redis.Int(conn.Do("HLEN", setName))
 }
 
-func ClearStorage(pool *redis.Pool, storageName string) (int, error) {
+func ClearStorage(storageName string) (int, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	return redis.Int(conn.Do("DEL", storageName))
 }
 
-func ClearMultipleStorage(pool *redis.Pool, storageNames []string) (int, error) {
+func ClearMultipleStorage(storageNames []string) (int, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	count := 0

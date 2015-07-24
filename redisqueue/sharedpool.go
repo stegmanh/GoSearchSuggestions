@@ -11,15 +11,25 @@ type config struct {
 	Protocol string
 }
 
-func MakePool() (redis.Pool, error) {
+var pool *redis.Pool
+
+func Init() {
+	var err error
+	pool, err = MakePool()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func MakePool() (*redis.Pool, error) {
 	content, err := ioutil.ReadFile("./redisqueue/config.json")
 	if err != nil {
-		return redis.Pool{}, err
+		return &redis.Pool{}, err
 	}
 	var c config
 	err = json.Unmarshal(content, &c)
 	if err != nil {
-		return redis.Pool{}, err
+		return &redis.Pool{}, err
 	}
 	pool := redis.Pool{
 		MaxIdle:   50,
@@ -33,5 +43,5 @@ func MakePool() (redis.Pool, error) {
 			return c, err
 		},
 	}
-	return pool, nil
+	return &pool, nil
 }

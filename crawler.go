@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/garyburd/redigo/redis"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"path"
@@ -16,7 +15,6 @@ import (
 	"time"
 )
 
-var pool redis.Pool
 var db *sql.DB
 
 var disallowedUrls = make(map[string]bool)
@@ -55,16 +53,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	//Initilize redis information
-	pool, err = redisqueue.MakePool()
-	if err != nil {
-		panic(err)
-	}
+	redisqueue.Init()
 
 	//Fresh Start?
 	freshStart := true
 	if freshStart {
-		_, err := redisqueue.ClearMultipleStorage(&pool, []string{"urlexists", "crawlerstatus", "messagequeue"})
+		_, err := redisqueue.ClearMultipleStorage([]string{"urlexists", "crawlerstatus", "messagequeue"})
 		if err != nil {
 			panic(err)
 		}
@@ -75,7 +71,7 @@ func main() {
 		panic(err)
 	}
 	for _, url := range allowed {
-		_, err := redisqueue.AddUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		_, err := redisqueue.AddUniqueToQueue("urlexists", "messagequeue", url)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -84,7 +80,7 @@ func main() {
 	//Load Crawler Information
 	info = &crawlerinformation.CrawlerInformation{}
 	info.New()
-	info.StoreSelf(&pool, "crawlerstatus")
+	info.StoreSelf("crawlerstatus")
 
 	go updateCrawlerStatus()
 	Dispatch(10)
@@ -155,7 +151,7 @@ func Dispatch(toDispatch int) {
 	}
 
 	for {
-		url, err := redisqueue.QueuePop(&pool, "messagequeue")
+		url, err := redisqueue.QueuePop("messagequeue")
 		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
 			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
@@ -200,7 +196,7 @@ func handleUrl(url string) {
 		return
 	}
 	for _, url := range urlsToAdd {
-		_, err := redisqueue.AddUniqueToQueue(&pool, "urlexists", "messagequeue", url)
+		_, err := redisqueue.AddUniqueToQueue("urlexists", "messagequeue", url)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -210,7 +206,7 @@ func handleUrl(url string) {
 func updateCrawlerStatus() {
 	for {
 		mutex.Lock()
-		size, err := redisqueue.QueueLength(&pool, "messagequeue")
+		size, err := redisqueue.QueueLength("messagequeue")
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -218,7 +214,7 @@ func updateCrawlerStatus() {
 		info.QueueSize = size
 		info.UrlsCrawled = 15000
 		mutex.Unlock()
-		info.StoreSelf(&pool, "crawlerstatus")
+		info.StoreSelf("crawlerstatus")
 		time.Sleep(time.Second * 15)
 	}
 }

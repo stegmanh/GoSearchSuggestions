@@ -3,7 +3,6 @@ package crawlerinformation
 import (
 	"../redisqueue"
 	"encoding/json"
-	"github.com/garyburd/redigo/redis"
 )
 
 type CrawlerInformation struct {
@@ -27,12 +26,12 @@ func (c *CrawlerInformation) New() {
 }
 
 //I dont think this should exist. Crawler should be about current crawl... Maybe store at shutdown?
-func (c *CrawlerInformation) StoreSelf(pool *redis.Pool, hashName string) error {
+func (c *CrawlerInformation) StoreSelf(hashName string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
-	_, err = redisqueue.HashAdd(pool, hashName, "data", string(data))
+	_, err = redisqueue.HashAdd(hashName, "data", string(data))
 	return err
 }
 
