@@ -7,9 +7,6 @@ import (
 	"GoSearchSuggestions/websrc/models"
 )
 
-//TODO: Move crawler information to models section
-//Move
-
 func main() {
 	models.Init()
 
