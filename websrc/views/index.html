@@ -4,44 +4,25 @@
 	<meta charset="UTF-8">
 	<title>Document</title>
 
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
 	<link rel="stylesheet" type="text/css" href="static/css/main.css">
 </head>
 <body id="app">
-<header>
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Brand</a>
-            </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li><a href="#">Link</a></li>
-                    <li class="dropdown">
-				          <input type="text" class="dropdown-toggle" data-toggle="dropdown" />
-				          <ul class="dropdown-menu">
-				          	<li v-repeat="result : results.Results"><a href="#">{{result}}</a></li>
-				          </ul>
-				        </li>
-                </ul>
-            </div>
-            <!-- /.navbar-collapse -->
-        </div>
-        <!-- /.container-fluid -->
-    </nav>
-</header>
+	<header>
+		<nav id="navbar">
+			<span id="logo">Logo Here</span>
+			<div id="search-container">
+				<input type="text" id="search">
+				<ul id="results">
+					<li>a</li>
+					<li>b</li>
+					<li>c</li>
+				</ul>
+			</div>
+		</nav>
+	</header>
 
-
-	<main>
+<!-- 	<main>
 		<div>
 			<input v-model="term" v-on="keyup:autoComplete">
 		</div>
@@ -54,10 +35,9 @@
 			<input type="password" name="password">
 			<input type="submit" value="Submit">
 		</form>
-	</main>
+	</main> -->
 
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="http://cdn.jsdelivr.net/vue/0.12.8/vue.min.js"></script>
 	<script type="text/javascript" src="static/js/main.js"></script>
 </body>
