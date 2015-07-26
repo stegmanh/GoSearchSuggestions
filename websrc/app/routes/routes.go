@@ -12,9 +12,9 @@ import (
 
 func InitHandler() http.Handler {
 	router := mux.NewRouter()
-	router.HandleFunc("/", Use(Home, GetContext))
-	router.HandleFunc("/login", Use(Login, GetContext))
-	router.HandleFunc("/dashboard", Use(Dashboard, Authenticated, GetContext)).Methods("GET")
+	router.HandleFunc("/", Home)
+	router.HandleFunc("/login", Login)
+	router.HandleFunc("/dashboard", Use(Dashboard, Authenticated)).Methods("GET")
 	router.HandleFunc("/articles", DbSearchHandler).Methods("GET")
 	router.HandleFunc("/autocomplete", SearchHandler).Methods("GET")
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./websrc/static/")))).Methods("GET")
