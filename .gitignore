@@ -5,3 +5,4 @@ config.json
 cleanfile.go
 text
 password.json
+server.log
