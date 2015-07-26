@@ -4,3 +4,4 @@ test*.go
 config.json
 cleanfile.go
 text
+password.json
