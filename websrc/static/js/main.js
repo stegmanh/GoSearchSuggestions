@@ -4,7 +4,8 @@ var demo = new Vue({
     el: '#app',
     data: {
         term: null,
-        results: null
+        results: null,
+        selected: null
     },
 
     methods: {
@@ -17,10 +18,17 @@ var demo = new Vue({
     		var xhr = new XMLHttpRequest()
 	      xhr.open('GET', "/autocomplete?q=" + self.term)
 	      xhr.onload = function () {
-	      		console.log(JSON.parse(xhr.responseText))
         		self.results = JSON.parse(xhr.responseText)
 	      }
 	      xhr.send()
     	}
     }
+})
+
+Vue.filter('take', function(value, limit) {
+	return value.slice(0, limit)
+})
+
+document.getElementById("search").addEventListener('keyup', function(e) {
+	console.log(e)
 })

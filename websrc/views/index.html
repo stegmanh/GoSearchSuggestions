@@ -12,30 +12,21 @@
 		<nav id="navbar">
 			<span id="logo">Logo Here</span>
 			<div id="search-container">
-				<input type="text" id="search">
+				<input type="text" id="search" v-model="term" v-on="keyup:autoComplete">
 				<ul id="results">
-					<li>a</li>
-					<li>b</li>
-					<li>c</li>
+					<li v-repeat="result : results.Results | take 10">{{result}}</li>
+					<li v-show="!results.Results">No Results Found</li>
 				</ul>
 			</div>
 		</nav>
 	</header>
 
-<!-- 	<main>
-		<div>
-			<input v-model="term" v-on="keyup:autoComplete">
-		</div>
-		<div>
-			<ul v-repeat="result : results.Results">
-				<li>{{result}}</li>
-			</ul>
-		</div>
+	<main>
 		<form action="/login" method="POST">
 			<input type="password" name="password">
 			<input type="submit" value="Submit">
 		</form>
-	</main> -->
+	</main>
 
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script type="text/javascript" src="http://cdn.jsdelivr.net/vue/0.12.8/vue.min.js"></script>
