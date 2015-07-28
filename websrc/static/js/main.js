@@ -9,7 +9,15 @@ var demo = new Vue({
     },
 
     methods: {
-    	autoComplete: function() {
+    	autoComplete: function(e) {
+    		switch (e.keyCode) {
+    			case 38:
+    				console.log(38)
+    				return
+    			case 40:
+    				console.log(40)
+    				return
+    		}
 			var self = this
 			if (self.term.length < 1) {
 				self.results = null
@@ -27,8 +35,4 @@ var demo = new Vue({
 
 Vue.filter('take', function(value, limit) {
 	return value.slice(0, limit)
-})
-
-document.getElementById("search").addEventListener('keyup', function(e) {
-	console.log(e)
 })
