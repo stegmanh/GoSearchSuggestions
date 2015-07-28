@@ -14,7 +14,7 @@
 			<div id="search-container">
 				<input type="text" id="search" v-model="term" v-on="keyup:autoComplete">
 				<ul id="results">
-					<li v-repeat="result : results.Results | take 10">{{result}}</li>
+					<li v-repeat="result : results.Results | take 10" v-on="click: changeInput(this)">{{result}}</li>
 					<li v-show="!results.Results">No Results Found</li>
 				</ul>
 			</div>

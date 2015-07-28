@@ -5,20 +5,22 @@ var demo = new Vue({
     data: {
         term: null,
         results: null,
-        selected: null
+        selected: -1
     },
 
     methods: {
     	autoComplete: function(e) {
+ 			var self = this
     		switch (e.keyCode) {
     			case 38:
-    				console.log(38)
     				return
     			case 40:
-    				console.log(40)
+			    	if (self.selected > -1) {
+    					self.selected--
+    					return
+    				}
     				return
     		}
-			var self = this
 			if (self.term.length < 1) {
 				self.results = null
 				return
@@ -27,8 +29,15 @@ var demo = new Vue({
 	      xhr.open('GET', "/autocomplete?q=" + self.term)
 	      xhr.onload = function () {
         		self.results = JSON.parse(xhr.responseText)
+        		self.selected = -1
 	      }
 	      xhr.send()
+    	},
+
+    	changeInput: function(el) {
+    		var self = this
+    		self.term = el.$el.innerHTML
+    		self.results = null
     	}
     }
 })
