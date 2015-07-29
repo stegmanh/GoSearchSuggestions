@@ -5,7 +5,8 @@ var demo = new Vue({
     data: {
         term: null,
         results: null,
-        selected: -1
+        selected: -1,
+        current: null,
         prev: null
     },
 
@@ -24,7 +25,6 @@ var demo = new Vue({
 		   			if (self.selected < -1) {
 		   				self.selected = 9
 		   			}
-		   			console.log(self.selected)
 		   			self.term = self.$children[self.selected % 10].$el.innerHTML
 	    			self.$children[self.selected % 10].$el.setAttribute("class", "selected")
 	    			if (self.selected > 0) {
