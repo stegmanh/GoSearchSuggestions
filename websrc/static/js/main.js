@@ -50,7 +50,7 @@ var demo = new Vue({
 
     	changeDisplays: function() {
     		var self = this
-    		self.focus = false
+    		//self.focus = false
     	},
 
     	changeInput: function(el) {

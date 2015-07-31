@@ -10,7 +10,7 @@
 <body id="app">
 	<header>
 		<nav id="navbar">
-			<span id="logo">Logo Here</span>
+			<span id="logo">CrawlerSearch</span>
 			<div id="search-container">
 				<input type="text" id="search" v-model="term" v-on="keyup:autoComplete, focusout:changeDisplays" placeholder="Search">
 				<ul id="results">
@@ -22,14 +22,22 @@
 	</header>
 
 	<main>
-		<h1>Hello!</h1>
-		<form action="/login" method="POST">
-			<input type="password" name="password">
-			<input type="submit" value="Submit">
-		</form>
+		<div id="background">
+			<div id="search-meta">
+				<h4>Showing Results for: Sample Search String</h4>
+				<p>About 15 results shows</p>
+			</div>
+		</div>
+		<div class="container" id="article-container">
+			<div class="article">
+				<a href="#" class="article-title">Sample Title</a>
+				<p class="article-meta">https://www.example.com <span class="article-date">2015-5-10</span></p>
+			</div>
+		</div>
 	</main>
 
-	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
 	<script type="text/javascript" src="http://cdn.jsdelivr.net/vue/0.12.8/vue.min.js"></script>
 	<script type="text/javascript" src="static/js/main.js"></script>
 </body>

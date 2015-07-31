@@ -13,6 +13,8 @@ main {
 }
 
 #navbar {
+	display: flex;
+	align-items: center;
 	color: white;
 	position: fixed;
 	width: 100%;
@@ -29,6 +31,7 @@ main {
 
 #logo {
 	padding-right: 20px;
+	font-size: 2em;
 }
 
 #search, #results {
@@ -48,7 +51,9 @@ main {
 	margin: 0;
 	border: 1px solid black;
 	margin-left: -1px;
+	z-index: 100;
 	background-color: white;
+	opacity: 0%;
 }
 
 #results li {
@@ -67,4 +72,33 @@ main {
 
 .selected {
 	background-color: rgba(0, 0, 32, 0.2);
+}
+
+#background {
+	margin-top: 15px;
+	margin-bottom: 15px;
+	border-bottom: 1px solid #ebebeb;
+}
+
+#background h4 {
+	margin-bottom: 0px;
+}
+
+#background p {
+	padding-bottom: 0px;
+	margin-top: 0px;
+	margin-bottom: 5px;
+}
+
+#search-meta {
+	margin: 0 auto;
+	width: 80%;
+}
+
+#article-container {
+	font-size: 1.15em;
+}
+
+.article-date {
+	font-size: .75em;
 }
