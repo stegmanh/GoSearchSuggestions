@@ -12,9 +12,9 @@
 		<nav id="navbar">
 			<span id="logo">Logo Here</span>
 			<div id="search-container">
-				<input type="text" id="search" v-model="term" v-on="keyup:autoComplete" placeholder="Search">
+				<input type="text" id="search" v-model="term" v-on="keyup:autoComplete, focusout:changeDisplays" placeholder="Search">
 				<ul id="results">
-					<li v-repeat="result : results.Results | take 10" v-on="click: changeInput(this)">{{result}}</li>
+					<li v-show="focus" v-repeat="result : results.Results | take 10" v-on="click: changeInput(this)">{{result}}</li>
 					<li v-show="!results.Results">No Results Found</li>
 				</ul>
 			</div>

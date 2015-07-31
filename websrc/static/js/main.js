@@ -5,12 +5,14 @@ var demo = new Vue({
     data: {
         term: null,
         results: null,
-        selected: -1
+        selected: -1,
+        focus: false
     },
 
     methods: {
     	autoComplete: function(e) {
  			var self = this
+ 			self.focus = true
  			if (e.keyCode == 38 || e.keyCode == 40) {
 				switch (e.keyCode) {
 	    			case 38:
@@ -44,6 +46,11 @@ var demo = new Vue({
 	 			self.selected = -1
 	      }
 	      xhr.send()
+    	},
+
+    	changeDisplays: function() {
+    		var self = this
+    		self.focus = false
     	},
 
     	changeInput: function(el) {
