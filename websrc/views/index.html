@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<title>Document</title>
 
-	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
 	<link rel="stylesheet" type="text/css" href="static/css/main.css">
 </head>
 <body id="app">
@@ -28,10 +28,10 @@
 				<p>About 15 results shows</p>
 			</div>
 		</div>
-		<div class="container" id="article-container">
+		<div id="article-container">
 			<div class="article" v-repeat="article : articles.data">
 				<a href="{{article.source}}" class="article-title">{{article.title}}</a>
-				<p class="article-meta">https://www.example.com <span class="article-date">2015-5-10</span></p>
+				<p class="article-meta">{{article.source}}<span class="article-date">{{article.date}}</span></p>
 			</div>
 		</div>
 	</main>
