@@ -20,7 +20,7 @@ main {
 	width: 100%;
 	height: 46px;
 	padding: 0px 25px;
-	background-color: rgba(0, 0, 0, 0.8)
+	background-color: rgba(0, 0, 0, 0.8);
 }
 
 #search-container {
@@ -51,9 +51,7 @@ main {
 	margin: 0;
 	border: 1px solid black;
 	margin-left: -1px;
-	z-index: 100;
 	background-color: white;
-	opacity: 0%;
 }
 
 #results li {
@@ -94,9 +92,12 @@ main {
 	margin: 0 auto;
 	width: 80%;
 }
-
+/*
+	Set z-index for bug that makes relative element appear WITH dropdown
+*/
 #article-container {
 	font-size: 1.15em;
+	z-index: -1;
 }
 
 .article-date {
