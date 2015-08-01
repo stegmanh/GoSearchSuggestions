@@ -6,7 +6,8 @@ var demo = new Vue({
         term: null,
         results: null,
         selected: -1,
-        focus: false
+        focus: false,
+        articles: null
     },
 
     methods: {
@@ -37,6 +38,12 @@ var demo = new Vue({
  			}
  			if (e.keyCode == 13) {
  				self.focus = false
+ 				var xhr = new XMLHttpRequest()
+		      xhr.open('GET', "/articles?title=" + self.term)
+		      xhr.onload = function () {
+	        		self.articles = JSON.parse(xhr.responseText)
+		      }
+		      xhr.send()
  				return
  			}
 			if (self.term.length < 1) {

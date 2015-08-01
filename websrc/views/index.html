@@ -29,8 +29,8 @@
 			</div>
 		</div>
 		<div class="container" id="article-container">
-			<div class="article">
-				<a href="#" class="article-title">Sample Title</a>
+			<div class="article" v-repeat="article : articles.data">
+				<a href="{{article.source}}" class="article-title">{{article.title}}</a>
 				<p class="article-meta">https://www.example.com <span class="article-date">2015-5-10</span></p>
 			</div>
 		</div>

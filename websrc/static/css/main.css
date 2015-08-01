@@ -97,7 +97,6 @@ main {
 */
 #article-container {
 	font-size: 1.15em;
-	z-index: -1;
 }
 
 .article-date {
