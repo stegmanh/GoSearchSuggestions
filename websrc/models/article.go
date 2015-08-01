@@ -33,6 +33,18 @@ func GetArticle(id int) (Article, error) {
 	return article, nil
 }
 
+func GetArticleByTitle(search string) (Article, error) {
+	var title, createdAt, source, body string
+	var ai int
+	err := db.QueryRow("SELECT * FROM articles WHERE title = $1", search).Scan(&title, &source, &body, &createdAt, &ai)
+	article := Article{Title: title, Date: createdAt, Source: source, Body: body, Id: ai}
+	if err != nil {
+		fmt.Println(err)
+		return article, err
+	}
+	return article, nil
+}
+
 func SearchArticles(query string) (ArticleResponse, error) {
 	var response = ArticleResponse{Articles: make([]Article, 0)}
 	query = strings.Join(strings.Split(query, " "), " | ")

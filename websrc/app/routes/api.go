@@ -34,7 +34,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	//Change to something other than title
 	articleTitle := r.FormValue("title")
 	if len(articleTitle) == 0 {
 		response := ErrorResponse{Err: "You must input a title"}
@@ -58,6 +58,9 @@ func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
 	*/
 	ReponseJSON(w, articles, http.StatusOK)
 }
+
+// func TitleSearch(w http.ResponseWriter, r *http.Request) {
+// }
 
 func ReponseJSON(w http.ResponseWriter, i interface{}, status int) {
 	json, err := json.MarshalIndent(i, "", " ")
