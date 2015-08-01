@@ -35,6 +35,10 @@ var demo = new Vue({
 	    			self.$children[self.selected].$el.setAttribute("class", "selected")
 				return
  			}
+ 			if (e.keyCode == 13) {
+ 				self.focus = false
+ 				return
+ 			}
 			if (self.term.length < 1) {
 				self.results = null
 				return
@@ -43,14 +47,14 @@ var demo = new Vue({
 	      xhr.open('GET', "/autocomplete?q=" + self.term)
 	      xhr.onload = function () {
         		self.results = JSON.parse(xhr.responseText)
-	 			self.selected = -1
+	 				self.selected = -1
 	      }
 	      xhr.send()
     	},
 
     	changeDisplays: function() {
     		var self = this
-    		//self.focus = false
+    		self.focus = false
     	},
 
     	changeInput: function(el) {
