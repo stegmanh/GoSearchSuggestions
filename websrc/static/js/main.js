@@ -82,3 +82,7 @@ Vue.filter('shorten', function(value) {
 	value = value.split("/")
 	return value[0] + "//" + value[2]
 })
+
+Vue.filter('dateFormat', function(date) {
+	return moment(date).format('YYYY-MM-DD')
+})
