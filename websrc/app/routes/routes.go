@@ -16,7 +16,7 @@ func InitHandler() http.Handler {
 	router.HandleFunc("/login", Login)
 	router.HandleFunc("/dashboard", Use(Dashboard, Authenticated)).Methods("GET")
 	router.HandleFunc("/articles", DbSearchHandler).Methods("GET")
-	router.HandleFunc("/autocomplete", SearchHandler).Methods("GET")
+	router.HandleFunc("/autocomplete/{term}", AutoComplete).Methods("GET")
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./websrc/static/")))).Methods("GET")
 	return router
 }

@@ -22,16 +22,16 @@
 	</header>
 
 	<main>
-		<div id="background">
+		<div id="background" v-show="articles">
 			<div id="search-meta">
-				<h4>Showing Results for: <span>{{term}}</span></h4>
-				<p>About 15 results shows</p>
+				<h4>Showing Results for: <span>{{searchedTerm}}</span></h4>
+				<p>About {{articles.data.length}} results shows</p>
 			</div>
 		</div>
 		<div id="article-container">
 			<div class="article" v-repeat="article : articles.data">
 				<a href="{{article.source}}" class="article-title">{{article.title}}</a>
-				<p class="article-meta">{{article.source}}<span class="article-date">{{article.date}}</span></p>
+				<p class="article-meta">{{article.source | shorten}}<span class="article-date">{{article.date}}</span></p>
 			</div>
 		</div>
 	</main>

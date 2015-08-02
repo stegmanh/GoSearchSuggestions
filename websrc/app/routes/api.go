@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+
+	"github.com/gorilla/mux"
 )
 
 type Suggestions struct {
@@ -22,8 +24,9 @@ var plainWord = regexp.MustCompile(`(^[a-zA-Z_]*$)`)
 var trieTree *trie.Trie = nil
 var searchHistory map[string]int
 
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	searchTerm := r.FormValue("q")
+func AutoComplete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	searchTerm := vars["term"]
 	if len(searchTerm) == 0 {
 		fmt.Fprintf(w, "%#v", "Please send search results")
 		return

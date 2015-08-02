@@ -4,6 +4,7 @@ var demo = new Vue({
     el: '#app',
     data: {
         term: null,
+        searchedTerm: null,
         results: null,
         selected: -1,
         focus: false,
@@ -38,6 +39,7 @@ var demo = new Vue({
  			}
  			if (e.keyCode == 13) {
  				self.focus = false
+ 				self.searchedTerm = self.term
  				var xhr = new XMLHttpRequest()
 		      xhr.open('GET', "/articles?title=" + self.term)
 		      xhr.onload = function () {
@@ -51,7 +53,7 @@ var demo = new Vue({
 				return
 			}
     		var xhr = new XMLHttpRequest()
-	      xhr.open('GET', "/autocomplete?q=" + self.term)
+	      xhr.open('GET', "/autocomplete/" + self.term)
 	      xhr.onload = function () {
         		self.results = JSON.parse(xhr.responseText)
 	 				self.selected = -1
@@ -74,4 +76,9 @@ var demo = new Vue({
 
 Vue.filter('take', function(value, limit) {
 	return value.slice(0, limit)
+})
+
+Vue.filter('shorten', function(value) {
+	value = value.split("/")
+	return value[0] + "//" + value[2]
 })
