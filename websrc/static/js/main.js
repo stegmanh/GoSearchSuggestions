@@ -86,3 +86,12 @@ Vue.filter('shorten', function(value) {
 Vue.filter('dateFormat', function(date) {
 	return moment(date).format('YYYY-MM-DD')
 })
+
+Vue.filter('filterBody', function(body) {
+	var text = $(body)
+	return text.filter(function(idx, tag) {
+		return tag.tagName == "P"
+	}).splice(0, 2).reduce(function(prev, current) {
+		return prev + " " + current.innerHTML
+	}, '')
+})

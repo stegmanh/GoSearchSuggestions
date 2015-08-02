@@ -1,7 +1,7 @@
-@import url(http://fonts.googleapis.com/css?family=Lato);
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,600,300);
 
 * {
-	font-family: 'Lato', sans-serif;
+	font-family: 'Open Sans', sans-serif;
 	margin: 0;
 	padding: 0;
 }
@@ -109,10 +109,19 @@ main {
 	font-size: 1.15em;
 }
 
+.article-title {
+	font-weight: 600;
+}
+
 .article-date {
-	font-size: .65em;
+	font-size: .70em;
 }
 
 .article {
 	margin-bottom: 15px;
+}
+
+.article-text {
+	margin-top: 5px;
+	font-size: .80em;
 }
