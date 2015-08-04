@@ -20,6 +20,15 @@ type ArticleResponse struct {
 var ftsSearch string = "SELECT title, source, body, created_at, id FROM articles, to_tsvector(title) tvt, to_tsquery($1) tvq WHERE tvt @@ tvq ORDER BY ts_rank(tvt, tvq) DESC LIMIT 10"
 var limitftsSearch string = "SELECT title, source, body, created_at, id FROM articles, to_tsvector(title) tvt, to_tsquery($1) tvq WHERE tvt @@ tvq ORDER BY ts_rank(tvt, tvq) DESC LIMIT 10"
 
+func GetArticleCount() (int, error) {
+	var count int
+	err := db.QueryRow("SELECT count(*) FROM articles").Scan(&count)
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
+}
+
 func GetArticle(id int) (Article, error) {
 	var title, createdAt, source, body string
 	var ai int

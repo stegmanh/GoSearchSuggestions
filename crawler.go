@@ -184,6 +184,7 @@ func handleUrl(url string) {
 		urlsToAdd = pi.Urls
 		err = pi.StorePage(db)
 		if err != nil {
+			fmt.Println("Line 187")
 			fmt.Println(err)
 		}
 	case ".xml":
@@ -212,9 +213,22 @@ func updateCrawlerStatus() {
 			continue
 		}
 		info.QueueSize = size
-		info.UrlsCrawled = 15000
+		indexSize, err := GetArticleCount()
+		if err != nil {
+			fmt.Println(err)
+		}
+		info.IndexSize = indexSize
 		mutex.Unlock()
 		info.StoreSelf("crawlerstatus")
 		time.Sleep(time.Second * 15)
 	}
+}
+
+func GetArticleCount() (int, error) {
+	var count int
+	err := db.QueryRow("SELECT count(*) FROM articles").Scan(&count)
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
 }
