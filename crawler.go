@@ -184,7 +184,6 @@ func handleUrl(url string) {
 		urlsToAdd = pi.Urls
 		err = pi.StorePage(db)
 		if err != nil {
-			fmt.Println("Line 187")
 			fmt.Println(err)
 		}
 	case ".xml":

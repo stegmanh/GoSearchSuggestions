@@ -38,13 +38,13 @@ func TraverseNode(n *html.Node, pi *PageInformation) {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, attr := range n.Attr {
 			if attr.Key == "href" {
-				url := attr.Key
+				url := attr.Val
 				if strings.HasPrefix(url, "/") {
 					url = "http://cnn.com" + url
 				}
 				if !validUrl.MatchString(url) {
+					//Invalid URL, continue
 					continue
-					fmt.Println("Invalid URL to crawl ", url)
 				}
 				pi.Urls = append(pi.Urls, url)
 			}
