@@ -18,13 +18,32 @@ type PageInformation struct {
 	Urls                []string
 }
 
-func (pi *PageInformation) StorePage(db *sql.DB) error {
+func (pi *PageInformation) StorePage(db *sql.DB) (bool, error) {
 	//Changed to query row because query would give error with mismatched "multiple-value db.Query() in single-value context"
-	rows, err := db.Query("INSERT INTO articles (title, created_at, source, body) VALUES ($1, $2, $3, $4) RETURNING title", pi.Title, pi.Date, pi.Source, string(pi.Body))
-	if rows != nil {
-		rows.Close()
+	exists, err := PageExists(db, pi.Title)
+	if err != nil {
+		return false, err
 	}
-	return err
+	if !exists {
+		rows, err := db.Query("INSERT INTO articles (title, created_at, source, body) VALUES ($1, $2, $3, $4) RETURNING title", pi.Title, pi.Date, pi.Source, string(pi.Body))
+		if rows != nil {
+			rows.Close()
+		}
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+func PageExists(db *sql.DB, title string) (bool, error) {
+	var count int
+	err := db.QueryRow("SELECT count(*) FROM articles WHERE title = $1", title).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return (count > 0), nil
 }
 
 //Helper function to traverse a HTML node and update the page information
