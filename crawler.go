@@ -126,7 +126,7 @@ func (w Worker) Start() {
 				info.AppendArray(url)
 				mutex.Unlock()
 				//Sleep to slow things down...
-				time.Sleep(time.Millisecond * 50)
+				time.Sleep(time.Millisecond)
 			case command := <-w.Commands:
 				fmt.Println(command)
 			}
