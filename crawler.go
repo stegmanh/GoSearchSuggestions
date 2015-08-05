@@ -151,7 +151,6 @@ func Dispatch(toDispatch int) {
 	for {
 		url, err := redisqueue.QueuePop("messagequeue")
 		if _, ok := disallowedUrls[url]; ok || err != nil || len(url) == 0 {
-			fmt.Println(len(url), err)
 			fmt.Println("Sleeping..")
 			time.Sleep(3 * time.Second)
 		} else {
