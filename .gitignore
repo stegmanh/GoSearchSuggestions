@@ -6,3 +6,4 @@ cleanfile.go
 text
 password.json
 server.log
+cred.json
