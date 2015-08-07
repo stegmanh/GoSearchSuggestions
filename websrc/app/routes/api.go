@@ -33,7 +33,7 @@ func AutoComplete(w http.ResponseWriter, r *http.Request) {
 	}
 	searchResults := models.Trie.Find(searchTerm)
 	responseJSON := Suggestions{Term: searchTerm, Results: searchResults}
-	ReponseJSON(w, responseJSON, http.StatusOK)
+	ResponseJSON(w, responseJSON, http.StatusOK)
 }
 
 func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,14 +41,14 @@ func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
 	articleTitle := r.FormValue("title")
 	if len(articleTitle) == 0 {
 		response := ErrorResponse{Err: "You must input a title"}
-		ReponseJSON(w, response, http.StatusNotAcceptable)
+		ResponseJSON(w, response, http.StatusNotAcceptable)
 		return
 	}
 	articles, err := models.SearchArticles(articleTitle)
 	if err != nil {
 		fmt.Fprintf(w, "%#v", err)
 		response := ErrorResponse{Err: "Error Reading from Database"}
-		ReponseJSON(w, response, http.StatusInternalServerError)
+		ResponseJSON(w, response, http.StatusInternalServerError)
 		return
 	}
 	/*
@@ -59,13 +59,25 @@ func DbSearchHandler(w http.ResponseWriter, r *http.Request) {
 				article.Body = bytes.Replace(article.Body, []byte("\\u0026"), []byte("&"), -1)
 			}
 	*/
-	ReponseJSON(w, articles, http.StatusOK)
+	ResponseJSON(w, articles, http.StatusOK)
+}
+
+func GetCrawlerStatus(w http.ResponseWriter, r *http.Request) {
+	value, err := models.HashGet("crawlerstatus", "data")
+	if err != nil {
+		response := ErrorResponse{Err: "Error Loading Crawler Status"}
+		ResponseJSON(w, response, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(value))
 }
 
 // func TitleSearch(w http.ResponseWriter, r *http.Request) {
 // }
 
-func ReponseJSON(w http.ResponseWriter, i interface{}, status int) {
+func ResponseJSON(w http.ResponseWriter, i interface{}, status int) {
 	json, err := json.MarshalIndent(i, "", " ")
 	if err != nil {
 		http.Error(w, "Error Encoding JSON", http.StatusInternalServerError)
