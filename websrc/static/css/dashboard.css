@@ -1,0 +1,59 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto:400,500,700,400italic,500italic,700italic,300,300italic);
+
+html {
+	height: 100%;
+}
+
+body {
+	font-family: 'Roboto', sans-serif;
+	height: 100%;
+}
+
+header, main {
+	height: 100%;
+}
+
+header {
+	width: 15%;
+	float: left;
+}
+
+main {
+	width: 85%;
+	float: right;
+}
+
+.nav-container {
+	height: 100%;
+	background-color: #FFE082;
+}
+
+.widget-holder {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	align-content: center;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.widget {
+	border: 1px solid black;
+	margin: 2em;
+	max-width: 250px;	
+}
+
+.widget-title, .widget-subtitle, .widget-content {
+	padding: .75em;
+}
+
+.widget-title {
+	font-size: 1.25em;
+	background-color: #F44336;
+}
+
+.widget-subtitle {
+	font-size: .95em;
+	background-color: #EEEEEE;
+}
+

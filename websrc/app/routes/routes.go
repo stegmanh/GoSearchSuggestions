@@ -14,7 +14,7 @@ func InitHandler() http.Handler {
 	router := mux.NewRouter()
 	router.HandleFunc("/", Home)
 	router.HandleFunc("/login", Login)
-	router.HandleFunc("/dashboard", Use(Dashboard, Authenticated)).Methods("GET")
+	router.HandleFunc("/dashboard", Use(Dashboard)).Methods("GET")
 	router.HandleFunc("/articles", DbSearchHandler).Methods("GET")
 	router.HandleFunc("/autocomplete/{term}", AutoComplete).Methods("GET")
 	router.HandleFunc("/crawlerstatus", GetCrawlerStatus).Methods("GET")
@@ -23,7 +23,7 @@ func InitHandler() http.Handler {
 }
 
 func Dashboard(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("Name is %s ", "Holden")))
+	http.ServeFile(w, r, "./websrc/views/dashboard.html")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
