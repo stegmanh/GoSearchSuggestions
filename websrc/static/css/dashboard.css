@@ -25,7 +25,13 @@ main {
 
 .nav-container {
 	height: 100%;
-	background-color: #FFE082;
+	background-color: #E0E0E0;
+}
+
+#title {
+	text-align: center;
+	margin: 0 auto;
+	padding-top: 1em;
 }
 
 .widget-holder {
@@ -54,6 +60,6 @@ main {
 
 .widget-subtitle {
 	font-size: .95em;
-	background-color: #EEEEEE;
+	border-bottom: 1px solid #9E9E9E;
 }
 
