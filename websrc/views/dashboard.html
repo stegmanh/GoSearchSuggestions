@@ -7,7 +7,7 @@
 	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
 	<link rel="stylesheet" type="text/css" href="static/css/dashboard.css">
 </head>
-<body>
+<body id="dashboard">
 	
 	<header>
 		<nav class="nav-container">
@@ -22,8 +22,8 @@
 				<div class="widget-title">Lets put a title here</div>
 				<div class="widget-subtitle">Sub title here</div>
 				<div class="widget-content">
-					<input type="text">
-					<input type="buttom">
+					<input type="text" v-on="keyup:test">
+					<input type="button">
 					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsa, voluptatibus, pariatur? Rem, possimus natus doloremque et aliquam laborum cumque facere aperiam perferendis nostrum iure reiciendis sunt vel quas tenetur fugiat?</p>
 				</div>
 			</div>
@@ -32,7 +32,7 @@
 				<div class="widget-subtitle">Sub title here</div>
 				<div class="widget-content">
 					<input type="text">
-					<input type="buttom">
+					<input type="button">
 					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsa, voluptatibus, pariatur? Rem, possimus natus doloremque et aliquam laborum cumque facere aperiam perferendis nostrum iure reiciendis sunt vel quas tenetur fugiat?</p>
 				</div>
 			</div>
@@ -41,11 +41,14 @@
 				<div class="widget-subtitle">Sub title here</div>
 				<div class="widget-content">
 					<input type="text">
-					<input type="buttom">
+					<input type="button">
 					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsa, voluptatibus, pariatur? Rem, possimus natus doloremque et aliquam laborum cumque facere aperiam perferendis nostrum iure reiciendis sunt vel quas tenetur fugiat?</p>
 				</div>
 			</div>
 		</div>
 	</main>
+	
+	<script type="text/javascript" src="http://cdn.jsdelivr.net/vue/0.12.8/vue.min.js"></script>
+	<script type="text/javascript" src="static/js/dashboard.js"></script>
 </body>
 </html>
